@@ -1,36 +1,35 @@
 #!/bin/bash
 
-### Version 1.0
+### Version 1.0.1
 ### Created by Erik Berglund
 
 ###
 ### DESCRIPTION
 ###
 
-
-# userIsHidden flag only works on OS X Yosemite or higher.
+# This script is designed to be run from an installer package as a preinstall or a postinstall script.
 
 ###
 ### CHANGE THESE VARIABLES TO MODIFY USER
 ###
 
+userShortName="user"
+userRealName="User"
+userPassword="password"
 
-userShortName="user"					
-userRealName="User"					
-userPassword="password"					
-
-# Path to a picture on target machine, if it doesn't exist at script runtime it will be replaced by a default picture
-userPicture="/Library/User Pictures/Fun/Ying-Yang.png"	
+# Path to a picture on target machine, if it doesn't exist at script runtime it will be replaced by a default picture.
+userPicture="/Library/User Pictures/Fun/Ying-Yang.png"
 
 # If userIsHidden is set to yes, this will be overridden to "/var/${userShortName}".
+# Don't add ${3} before user path, this will be read by the target system when booted.
 userHomeDirectory="/Users/${userShortName}"
 
 userUID="999"
-userPrimaryGroupID="20"						
+userPrimaryGroupID="20"
 
-# Additional groups user should be a member of, separated by semicolon without spaces. 
+# Additional groups user should be a member of, separated by semicolon (;) without spaces.
 # Don't add group 'admin' here, use "userIsAdmin" setting instead.
-userGroups="" 	
+userGroups=""
 
 userIsAdmin="yes"
 userIsHidden="no"
@@ -40,15 +39,43 @@ userAutoLogin="yes"
 ### AUTOMATIC VARIABLES
 ###
 
-targetVolume="${3}"
+# Set up all variables passed by installer
+# More info here on page 50: https://developer.apple.com/legacy/library/documentation/DeveloperTools/Conceptual/SoftwareDistribution4/SoftwareDistribution4.pdf
+installerPackagePath="${1}"		# (unused) Full path to the installation package the Installer application is processing. Exanoke: 
+destinationPath="${2}"			# (unused) Full path to the installation destination. Example: /Applications
+targetVolumePath="${3}"			# Installation volume (or mountpoint) to receive the payload
+rootPath="${4}"					# (unused) The root directory for the system. Example: /
 
-if [[ -z ${targetVolume} ]] || ! [[ -d ${targetVolume} ]]; then
-    printf "%s\n" "Variable targetVolume=${targetVolume} is not valid!";
-    exit 1
+# Check that we get a valid volume path as targetVolumePath, else exit.
+if [[ -z ${targetVolumePath} ]] || ! [[ -d ${targetVolumePath} ]]; then
+	printf "%s\n" "Variable targetVolumePath=${targetVolumePath} is not valid!";
+	exit 1
 fi
 
+# Add target volumes' standrad paths to our own PATH
+PATH="${3}/usr/bin":"${3}/bin":"${3}/usr/sbin":"${3}/sbin":"$PATH"
+
+# Get path to commands to be used in the script.
+cmd_awk=$( which awk )
+cmd_dscl=$( which dscl )
+cmd_defaults=$( which defaults )
+cmd_PlistBuddy="${3}/usr/libexec/PlistBuddy"
+
+# Database path to the user to be created.
 targetVolumeDatabasePath="/Local/Default/Users/${userShortName}"
 
+# Get target volume os minor version.
+# Minor version is 9 in 10.9.5 for example.
+targetVolumeOsMinorVersion=$( "${cmd_PlistBuddy}" -c "Print ProductUserVisibleVersion" "${3}/System/Library/CoreServices/SystemVersion.plist" | "${cmd_awk}" -F. '{ print $2 }' 2>&1  )
+
+# Check that userShortName doesn't contain invalid characters.
+if [[ ${userShortName} =~ ' ' ]]; then
+	printf "%s\n" "User short name contains invalid characters!"
+	printf "%s\n" "userShortName=${userShortName}"
+	exit 1
+fi
+
+# If userIsAdmin is set to 'yes', add it to the group admin and set it's home directory in /var
 if [[ ${userIsAdmin} == yes ]]; then
 	if [[ -z ${userGroups} ]]; then
 		userGroups="admin"
@@ -61,25 +88,27 @@ if [[ ${userIsAdmin} == yes ]]; then
 	fi
 fi
 
-defaultUserPicture="/Library/User Pictures/Fun/Ying-Yang.png"
+# If no home directory was defined, use the default user home directory path.
+if [[ -z ${userHomeDirectory} ]]; then
+	userHomeDirectory="/Users/${userShortName}"
+fi
 
-if [[ ! -f ${targetVolume}/${userPicture} ]]; then
+# If the selected path for user picture doesn't exist on target volume, add a default picture instead.
+if [[ ! -f ${targetVolumePath}/${userPicture} ]]; then
+	defaultUserPicture="/Library/User Pictures/Fun/Ying-Yang.png"
 	printf "%s\n" "Selected user picture doesn't exist on target volume!"
 	printf "%s\n" "userPicture=${userPicture}"
 	printf "%s\n" "Will use the default user picture instead: ${defaultUserPicture}"
-	userPicture="/Library/User Pictures/Fun/Ying-Yang.png"
+	userPicture="${defaultUserPicture}"
 fi
-
-cmd_dscl="$( which dscl )"
-cmd_defaults="$( which defaults )"
 
 ###
 ### MAIN SCRIPT
 ###
 
 # Create user record
-printf "%s\n" "Creating user record in target user database: ${targetVolumeDatabasePath}"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolume}/var/db/dslocal/nodes/Default" localonly -create "${targetVolumeDatabasePath}" 2>&1 )
+printf "%s\n" "Creating user record in target volume database: ${targetVolumeDatabasePath}"
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -create "${targetVolumeDatabasePath}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Unable to create user record in target user database"
@@ -90,7 +119,7 @@ fi
 
 # Add RealName
 printf "%s\n" "Adding user RealName: ${userRealName}"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolume}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" RealName "${userRealName}" 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" RealName "${userRealName}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Failed to set RealName"
@@ -101,7 +130,7 @@ fi
 
 # Add UniqueID
 printf "%s\n" "Adding user UniqueID: ${userUID}"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolume}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" UniqueID ${userUID} 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" UniqueID ${userUID} 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Failed to set UniqueID"
@@ -112,7 +141,7 @@ fi
 
 # Add PrimaryGroup
 printf "%s\n" "Adding user PrimaryGroupID: ${userPrimaryGroupID}"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolume}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" PrimaryGroupID ${userPrimaryGroupID} 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" PrimaryGroupID ${userPrimaryGroupID} 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Failed to set PrimaryGroup"
@@ -123,7 +152,7 @@ fi
 
 # Add NFSHomeDirectory
 printf "%s\n" "Adding user NFSHomeDirectory: ${userHomeDirectory}"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolume}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" NFSHomeDirectory "${userHomeDirectory}" 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" NFSHomeDirectory "${userHomeDirectory}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Failed to set NFSHomeDirectory"
@@ -134,7 +163,7 @@ fi
 
 # Add UserShell
 printf "%s\n" "Adding user UserShell: /bin/bash"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolume}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" UserShell '/bin/bash' 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" UserShell '/bin/bash' 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Failed to set UserShell"
@@ -145,7 +174,7 @@ fi
 
 # Add UserPicture
 printf "%s\n" "Adding user UserPicture: ${userPicture}"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolume}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" Picture "${userPicture}" 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" Picture "${userPicture}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Failed to set UserShell"
@@ -156,7 +185,7 @@ fi
 
 # Add Password
 printf "%s\n" "Adding user Password: *******"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolume}/var/db/dslocal/nodes/Default" localonly -passwd "${targetVolumeDatabasePath}" "${userPassword}" 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -passwd "${targetVolumeDatabasePath}" "${userPassword}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Failed to set Password"
@@ -171,11 +200,11 @@ if [[ -n ${userGroups} ]]; then
 	for i in "${groupArray[@]}"; do
 		groupName="${groupArray[i]}"
 		groupFileName="${groupName}.plist"
-		groupFilePath="${targetVolume}/var/db/dslocal/nodes/Default/groups/${groupFileName}"
+		groupFilePath="${targetVolumePath}/var/db/dslocal/nodes/Default/groups/${groupFileName}"
 		groupDatabasePath="/Local/Default/Groups/${groupName}"
 
 		if [[ -f ${groupFilePath} ]]; then
-			dscl_output=$( "${cmd_dscl}" -f "${targetVolume}/var/db/dslocal/nodes/Default" localonly -append "${groupDatabasePath}" GroupMembership "${userShortName}" 2>&1 )
+			dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${groupDatabasePath}" GroupMembership "${userShortName}" 2>&1 )
 			dscl_exit_status=${?}
 			if [[ ${dscl_exit_status} -ne 0 ]]; then
 				printf "%s\n" "Failed to add user to group: ${groupName}"
@@ -193,7 +222,7 @@ fi
 # Add IsHidden setting
 if [[ ${userIsHidden} == yes ]]; then
 	printf "%s\n" "Setting user: ${userShortName} as hidden"
-	dscl_output=$( "${cmd_dscl}" -f "${targetVolume}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" IsHidden 1 )
+	dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" IsHidden 1 )
 	dscl_exit_status=${?}
 	if [[ ${dscl_exit_status} -ne 0 ]]; then
 		printf "%s\n" "Failed to set hidden flag on user: ${userShortName}"
@@ -206,7 +235,7 @@ fi
 # Add autoLoginUser setting
 if [[ ${userAutoLogin} == yes ]]; then
 	printf "%s\n" "Setting user: ${userShortName} to log in automatically"
-	defaults_output=$( "${cmd_defaults}" write "${targetVolume}/Library/Preferences/com.apple.loginwindow.plist" 'autoLoginUser' -string "${userShortName}" 2>&1 )
+	defaults_output=$( "${cmd_defaults}" write "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 'autoLoginUser' -string "${userShortName}" 2>&1 )
 	defaults_exit_status=${?}
 	if [[ ${defaults_exit_status} -ne 0 ]]; then
 		printf "%s\n" "Failed to set auto login for user: ${userShortName}"
@@ -235,8 +264,8 @@ if [[ ${userAutoLogin} == yes ]]; then
 		userPasswordEncoded_length=$((userPasswordEncoded_length+1))
 	done
 	
-	echo -n "${userPasswordEncoded}" > "${targetVolume}/etc/kcpassword"
-	"${cmd_chmod}" 0600 "${targetVolume}/etc/kcpassword"
+	echo -n "${userPasswordEncoded}" > "${targetVolumePath}/etc/kcpassword"
+	"${cmd_chmod}" 0600 "${targetVolumePath}/etc/kcpassword"
 fi
 
 printf "%s\n" "Adding user: ${userShortName} was successful!"
