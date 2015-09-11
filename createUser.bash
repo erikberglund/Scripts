@@ -41,15 +41,21 @@ userAutoLogin="yes"
 
 # Set up all variables passed by installer
 # More info here on page 50: https://developer.apple.com/legacy/library/documentation/DeveloperTools/Conceptual/SoftwareDistribution4/SoftwareDistribution4.pdf
-installerPackagePath="${1}"		# (unused) Full path to the installation package the Installer application is processing. Exanoke: 
-destinationPath="${2}"			# (unused) Full path to the installation destination. Example: /Applications
-targetVolumePath="${3}"			# Installation volume (or mountpoint) to receive the payload
-rootPath="${4}"					# (unused) The root directory for the system. Example: /
+installerPackagePath="${1}"  # (unused) Full path to the installation package the Installer application is processing. Exanoke: 
+destinationPath="${2}"       # (unused) Full path to the installation destination. Example: /Applications
+targetVolumePath="${3}"      # Installation volume (or mountpoint) to receive the payload
+rootPath="${4}"              # (unused) The root directory for the system. Example: /
 
 # Check that we get a valid volume path as targetVolumePath, else exit.
 if [[ -z ${targetVolumePath} ]] || ! [[ -d ${targetVolumePath} ]]; then
 	printf "%s\n" "Variable targetVolumePath=${targetVolumePath} is not valid!";
 	exit 1
+fi
+
+# Get target volume os minor version.
+# Minor version is 9 in 10.9.5 for example.
+if [[ -f ${3}/System/Library/CoreServices/SystemVersion.plist ]]; then
+	targetVolumeOsMinorVersion=$( "${cmd_PlistBuddy}" -c "Print ProductUserVisibleVersion" "${3}/System/Library/CoreServices/SystemVersion.plist" | "${cmd_awk}" -F. '{ print $2 }' 2>&1  )
 fi
 
 # Add target volumes' standrad paths to our own PATH
@@ -60,13 +66,6 @@ cmd_awk=$( which awk )
 cmd_dscl=$( which dscl )
 cmd_defaults=$( which defaults )
 cmd_PlistBuddy="${3}/usr/libexec/PlistBuddy"
-
-# Database path to the user to be created.
-targetVolumeDatabasePath="/Local/Default/Users/${userShortName}"
-
-# Get target volume os minor version.
-# Minor version is 9 in 10.9.5 for example.
-targetVolumeOsMinorVersion=$( "${cmd_PlistBuddy}" -c "Print ProductUserVisibleVersion" "${3}/System/Library/CoreServices/SystemVersion.plist" | "${cmd_awk}" -F. '{ print $2 }' 2>&1  )
 
 # Check that userShortName doesn't contain invalid characters.
 if [[ ${userShortName} =~ ' ' ]]; then
@@ -101,6 +100,9 @@ if [[ ! -f ${targetVolumePath}/${userPicture} ]]; then
 	printf "%s\n" "Will use the default user picture instead: ${defaultUserPicture}"
 	userPicture="${defaultUserPicture}"
 fi
+
+# Database path to the user to be created.
+targetVolumeDatabasePath="/Local/Default/Users/${userShortName}"
 
 ###
 ### MAIN SCRIPT
