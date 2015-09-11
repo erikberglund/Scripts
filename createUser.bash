@@ -13,7 +13,10 @@
 ### CHANGE THESE VARIABLES TO MODIFY USER
 ###
 
+# User short name may only contain the following characters: a-z, A-Z, _ (underscore), - (hyphen), . (period)
+# More info here on page 66-67: https://manuals.info.apple.com/MANUALS/1000/MA1181/en_US/UserMgmt_v10.6.pdf
 userShortName="user"
+
 userRealName="User"
 userPassword="password"
 
@@ -68,7 +71,7 @@ cmd_defaults=$( which defaults )
 cmd_PlistBuddy="${3}/usr/libexec/PlistBuddy"
 
 # Check that userShortName doesn't contain invalid characters.
-if [[ ${userShortName} =~ ' ' ]]; then
+if ! [[ ${userShortName} =~ ^[-_.a-zA-Z]+$ ]]; then
 	printf "%s\n" "User short name contains invalid characters!"
 	printf "%s\n" "userShortName=${userShortName}"
 	exit 1
