@@ -14,7 +14,12 @@
 ### USAGE
 ###
 
-#./sharedLibraryDependencyChecker.bash /path/to/app-or-binary /path/to/system/root/volume/
+# Usage: ./sharedLibraryDependencyChecker.bash [options] <argv>...
+#
+# Options:
+#  -t	Path to application (.app) or binary
+#  -r	Path to system volume root
+#  -x	(Optional) Output missing dependencies as regex strings for use with cpio
 
 ###
 ### VARIABLES
