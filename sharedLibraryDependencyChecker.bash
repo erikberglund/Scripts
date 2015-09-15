@@ -175,6 +175,7 @@ find_missing_dependencies_on_volume() {
 	local array="${1}[@]"
 	
 	# 2 - Array variable name for new array
+	# -
 	
 	declare -a newArray
 	for arrayItem in "${!array}"; do
@@ -229,8 +230,13 @@ clean_and_sort_array external_dependencies
 clean_and_sort_array bundled_dependencies
 find_missing_dependencies_on_volume external_dependencies missing_external_dependencies
 
-printf "%s\n" "[Missing Dependencies]
-${missing_external_dependencies[@]}"
-#printf "%s\n" "bundled_dependencies=${bundled_dependencies[@]}"
+# Print result
+missing_external_dependencies_count=${#missing_external_dependencies[@]}
+if [[ ${missing_external_dependencies_count} -ne 0 ]]; then
+	printf "\n%s\n" "[${1##*/} - Missing Dependencies]"
+	for ((i=0; i<missing_external_dependencies_count; i++)); do printf "\t%s\n" "${missing_external_dependencies[i]}"; done
+else
+	printf "%s\n" "All dependencies exist on target volume!"
+fi
 
 exit 0
