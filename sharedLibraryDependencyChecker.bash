@@ -20,6 +20,8 @@
 ### VARIABLES
 ###
 
+path_tmp_relational_plist="/tmp/$( uuidgen ).plist"
+
 declare -a external_dependencies
 declare -a bundled_dependencies
 declare -a missing_external_dependencies
@@ -43,11 +45,24 @@ resolve_dependencies_for_target() {
 			local dependency_library_path=$( resolve_dependency_path "${dependency_path}" "${dependency_target%/*}" )
 			
 			# If dependency_library_path is empty, continue
-			if [[ -z ${dependency_library_path} ]]; then
+			if [[ -n ${dependency_library_path} ]]; then
+				if [[ ${dependency_library_path} =~ \.framework ]]; then
+			
+					# If item contains '.framework' then just add the path to the framework bundle
+					dependency_library_path_key=$( sed -nE 's/^(.*.framework)\/.*$/\1/p' <<< ${dependency_library_path}  )
+				else
+					dependency_library_path_key=${dependency_library_path}
+				fi
+				current_key_value=$( /usr/libexec/PlistBuddy -c "Print ${dependency_library_path_key}" "${path_tmp_relational_plist}" 2>&1 )
+				if [[ ${current_key_value} =~ "Does Not Exist" ]]; then
+					plist_buddy_output_add_array=$( /usr/libexec/PlistBuddy -c "Add ${dependency_library_path_key} array" "${path_tmp_relational_plist}" 2>&1 )
+				fi
+				/usr/libexec/PlistBuddy -c "Add ${dependency_library_path_key}:0 string ${dependency_target}" "${path_tmp_relational_plist}"
+			else
 				continue
 			fi
 			
-			if [[ ${dependency_library_path} =~ ^@ ]] && ! array_contains_item bundled_dependencies "${dependency_library_path}"; then
+			if [[ ${dependency_path} =~ ^@ ]] && ! array_contains_item bundled_dependencies "${dependency_library_path}"; then
 				
 				# Add dependency to bundled_dependencies array if it's not already added
 				add_item_to_array bundled_dependencies "${dependency_library_path}"
@@ -234,9 +249,21 @@ find_missing_dependencies_on_volume external_dependencies missing_external_depen
 missing_external_dependencies_count=${#missing_external_dependencies[@]}
 if [[ ${missing_external_dependencies_count} -ne 0 ]]; then
 	printf "\n%s\n" "[${1##*/} - Missing Dependencies]"
-	for ((i=0; i<missing_external_dependencies_count; i++)); do printf "\t%s\n" "${missing_external_dependencies[i]}"; done
+	for ((i=0; i<missing_external_dependencies_count; i++)); do 
+		printf "\t%s\n" "$((${i}+1)) ${missing_external_dependencies[i]}"
+		printf "\n\t\t%s\n" "## Referenced by the following sources ##"
+		oldIFS=${IFS}; IFS=$'\n'
+		current_key_value=( $( /usr/libexec/PlistBuddy -c "Print ${missing_external_dependencies[i]}" "${path_tmp_relational_plist}" | grep -Ev [{}] | sed -e 's/^[ \t]*//' 2>&1 ) )
+		IFS=${oldIFS}
+		for ((j=0; j<${#current_key_value[@]}; j++)); do
+			printf "\t\t%s\n" "${current_key_value[j]}"
+		done
+		printf "\n"
+	done
 else
-	printf "%s\n" "All dependencies exist on target volume!"
+	printf "\n%s\n" "[${1##*/} - All Dependencies Exist]"
 fi
+
+rm "${path_tmp_relational_plist}"
 
 exit 0
