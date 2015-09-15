@@ -55,9 +55,9 @@ resolve_dependencies_for_target() {
 				fi
 				current_key_value=$( /usr/libexec/PlistBuddy -c "Print ${dependency_library_path_key}" "${path_tmp_relational_plist}" 2>&1 )
 				if [[ ${current_key_value} =~ "Does Not Exist" ]]; then
-					plist_buddy_output_add_array=$( /usr/libexec/PlistBuddy -c "Add ${dependency_library_path_key} array" "${path_tmp_relational_plist}" 2>&1 )
+					plist_buddy_output_add_array=$( /usr/libexec/PlistBuddy -c "Add '""${dependency_library_path_key}""' array" "${path_tmp_relational_plist}" 2>&1 )
 				fi
-				/usr/libexec/PlistBuddy -c "Add ${dependency_library_path_key}:0 string ${dependency_target}" "${path_tmp_relational_plist}"
+				/usr/libexec/PlistBuddy -c "Add '""${dependency_library_path_key}:0""' string ${dependency_target}" "${path_tmp_relational_plist}"
 			else
 				continue
 			fi
@@ -253,7 +253,7 @@ if [[ ${missing_external_dependencies_count} -ne 0 ]]; then
 		printf "\t%s\n" "$((${i}+1)) ${missing_external_dependencies[i]}"
 		printf "\n\t\t%s\n" "## Referenced by the following sources ##"
 		oldIFS=${IFS}; IFS=$'\n'
-		current_key_value=( $( /usr/libexec/PlistBuddy -c "Print ${missing_external_dependencies[i]}" "${path_tmp_relational_plist}" | grep -Ev [{}] | sed -e 's/^[ \t]*//' 2>&1 ) )
+		current_key_value=( $( /usr/libexec/PlistBuddy -c "Print '""${missing_external_dependencies[i]}""'" "${path_tmp_relational_plist}" | grep -Ev [{}] | sed -E 's/^[ $( printf '\t' )]*//' 2>&1 ) )
 		IFS=${oldIFS}
 		for ((j=0; j<${#current_key_value[@]}; j++)); do
 			printf "\t\t%s\n" "${current_key_value[j]}"
