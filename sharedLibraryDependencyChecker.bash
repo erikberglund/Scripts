@@ -206,40 +206,68 @@ find_missing_dependencies_on_volume() {
 	done
 }
 
+parse_command_line_options() {
+	while getopts "t:r:x" opt; do
+		case ${opt} in
+			t)	targetExecutable="${OPTARG}" ;;
+			r)	targetVolumePath="${OPTARG}" ;;
+			x)	regex="yes" ;;
+			\?)	print_usage; exit 1 ;;
+			:) print_usage; exit 1 ;;
+		esac
+	done
+	
+	verfiy_command_line_options
+}
+
+verfiy_command_line_options() {
+	if [[ -z ${targetExecutable} ]]; then
+	    printf "%s\n" "Input variable 1 targetExecutable=${targetExecutable} is not valid!";
+		print_usage
+	    exit 1
+	elif [[ ${targetExecutable##*.} == app ]]; then
+		targetExecutableName=$( /usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "${targetExecutable}/Contents/Info.plist" 2>&1 )
+		if [[ -n ${targetExecutableName} ]]; then
+			targetExecutable="${targetExecutable}/Contents/MacOS/${targetExecutableName}"
+			if ! [[ -f ${targetExecutable} ]]; then
+				printf "%s\n" "Could not find executable from App Bundle!"
+				printf "%s\n" "Try passing the executable path directly."
+				print_usage
+				exit 1
+			fi
+		else
+			printf "%s\n" "Could not get CFBundleExecutable from ${targetExecutable} from App Bundle!"
+			printf "%s\n" "Try passing the executable path directly."
+			print_usage
+			exit 1	
+		fi
+	fi
+	
+	if [[ -z ${targetVolumePath} ]] || ! [[ -d ${targetVolumePath} ]]; then
+	    printf "%s\n" "Input variable 2 targetVolumePath=${targetVolumePath} is not valid!";
+		print_usage
+	    exit 1
+	fi
+	
+	if ! [[ -f /usr/bin/otool ]]; then
+		printf "%s\n" "Could not find otool"
+	fi
+}
+
+print_usage() {
+	printf "\n%s\n\n" "Usage: ./${0##*/} [options] <argv>..."
+	printf "%s\n" "Options:"
+	printf "  %s\t%s\n" "-t" "Path to application (.app) or binary"
+	printf "  %s\t%s\n" "-r" "Path to system volume root"
+	printf "  %s\t%s\n" "-x" "(Optional) Output missing dependencies as regex strings for use with cpio"
+	printf "\n"
+}
+
 ###
 ### MAIN SCRIPT
 ###
 
-targetExecutable="${1}"
-if [[ -z ${targetExecutable} ]]; then
-    printf "%s\n" "Input variable 1 targetExecutable=${targetExecutable} is not valid!";
-    exit 1
-elif [[ ${targetExecutable##*.} == app ]]; then
-	targetExecutableName=$( /usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "${targetExecutable}/Contents/Info.plist" 2>&1 )
-	if [[ -n ${targetExecutableName} ]]; then
-		targetExecutable="${targetExecutable}/Contents/MacOS/${targetExecutableName}"
-		if ! [[ -f ${targetExecutable} ]]; then
-			printf "%s\n" "Could not find executable from App Bundle!"
-			printf "%s\n" "Try passing the executable path directly."
-			exit 1
-		fi
-	else
-		printf "%s\n" "Could not get CFBundleExecutable from ${targetExecutable} from App Bundle!"
-		printf "%s\n" "Try passing the executable path directly."
-		exit 1	
-	fi
-fi
-
-targetVolumePath="${2}"
-if [[ -z ${targetVolumePath} ]] || ! [[ -d ${targetVolumePath} ]]; then
-    printf "%s\n" "Input variable 2 targetVolumePath=${targetVolumePath} is not valid!";
-    exit 1
-fi
-
-if ! [[ -f /usr/bin/otool ]]; then
-	printf "%s\n" "Could not find otool"
-fi
-
+parse_command_line_options "${@}"
 resolve_dependencies_for_target "${targetExecutable}"
 clean_and_sort_array external_dependencies
 clean_and_sort_array bundled_dependencies
@@ -247,21 +275,31 @@ find_missing_dependencies_on_volume external_dependencies missing_external_depen
 
 # Print result
 missing_external_dependencies_count=${#missing_external_dependencies[@]}
-if [[ ${missing_external_dependencies_count} -ne 0 ]]; then
-	printf "\n%s\n" "[${1##*/} - Missing Dependencies]"
-	for ((i=0; i<missing_external_dependencies_count; i++)); do 
-		printf "\t%s\n" "$((${i}+1)) ${missing_external_dependencies[i]}"
-		printf "\n\t\t%s\n" "## Referenced by the following sources ##"
-		oldIFS=${IFS}; IFS=$'\n'
-		current_key_value=( $( /usr/libexec/PlistBuddy -c "Print '""${missing_external_dependencies[i]}""'" "${path_tmp_relational_plist}" | grep -Ev [{}] | sed -E 's/^[ $( printf '\t' )]*//' 2>&1 ) )
-		IFS=${oldIFS}
-		for ((j=0; j<${#current_key_value[@]}; j++)); do
-			printf "\t\t%s\n" "${current_key_value[j]}"
+
+if [[ ${regex} != yes ]]; then
+	if [[ ${missing_external_dependencies_count} -ne 0 ]]; then
+		printf "\n%s\n" "[${1##*/} - Missing Dependencies]"
+		for ((i=0; i<missing_external_dependencies_count; i++)); do
+			printf "\t%s\n" "$((${i}+1)) ${missing_external_dependencies[i]}"
+			printf "\n\t\t%s\n" "## Referenced by the following sources ##"
+			oldIFS=${IFS}; IFS=$'\n'
+			current_key_value=( $( /usr/libexec/PlistBuddy -c "Print '""${missing_external_dependencies[i]}""'" "${path_tmp_relational_plist}" | grep -Ev [{}] | sed -E 's/^[ $( printf '\t' )]*//' 2>&1 ) )
+			IFS=${oldIFS}
+			for ((j=0; j<${#current_key_value[@]}; j++)); do
+				printf "\t\t%s\n" "${current_key_value[j]}"
+			done
+			printf "\n"
 		done
-		printf "\n"
-	done
+	else
+		printf "\n%s\n" "[${1##*/} - All Dependencies Exist]"
+	fi
 else
-	printf "\n%s\n" "[${1##*/} - All Dependencies Exist]"
+	if [[ ${missing_external_dependencies_count} -ne 0 ]]; then
+		for ((i=0; i<missing_external_dependencies_count; i++)); do
+			dependency_folder=${missing_external_dependencies[i]%/*}
+			printf "%s\n" ".*/${dependency_folder##*/}/${missing_external_dependencies[i]##*/}.*"
+		done
+	fi
 fi
 
 rm "${path_tmp_relational_plist}"
