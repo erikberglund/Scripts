@@ -22,6 +22,8 @@
 
 declare -a external_dependencies
 declare -a bundled_dependencies
+declare -a missing_external_dependencies
+declare -a missing_bundled_dependencies
 
 ###
 ### FUNCTIONS
@@ -32,33 +34,38 @@ resolve_dependencies_for_target() {
 	# 1 - Path to the dependency to check
 	local dependency_target="${1}"
 	
-	# Loop through all dependencies listed by 'otool -L <dependency_target>'
-	while read dependency_path; do
+	if [[ -f "${dependency_target}" ]]; then
 		
-		# Get absolute path to dependency
-		local dependency_library_path=$( resolve_dependency_path "${dependency_path}" "${dependency_target%/*}" )
-		
-		# If dependency_library_path is empty, continue
-		if [[ -z ${dependency_library_path} ]]; then
-			continue
-		fi
-		
-		if [[ ${dependency_library_path} =~ ^@ ]] && ! array_contains_item bundled_dependencies "${dependency_library_path}"; then
+		# Loop through all dependencies listed by 'otool -L <dependency_target>'
+		while read dependency_path; do
 			
-			# Add dependency to bundled_dependencies array if it's not already added
-			add_item_to_array bundled_dependencies "${dependency_library_path}"
+			# Get absolute path to dependency
+			local dependency_library_path=$( resolve_dependency_path "${dependency_path}" "${dependency_target%/*}" )
 			
-			# Resolve current dependency's dependencies as well
-			resolve_dependencies_for_target "${dependency_library_path}"
-		elif ! array_contains_item external_dependencies "${dependency_library_path}"; then
+			# If dependency_library_path is empty, continue
+			if [[ -z ${dependency_library_path} ]]; then
+				continue
+			fi
 			
-			# Add dependency to external_dependencies array if it's not already added
-			add_item_to_array external_dependencies "${dependency_library_path}"
-			
-			# Resolve current dependency's dependencies as well
-			resolve_dependencies_for_target "${dependency_library_path}"
-		fi
-	done < <( otool -L "${dependency_target}" | sed -nE "s/^[ $( printf '\t' )]+(.*)\(.*$/\1/p" 2>&1 )
+			if [[ ${dependency_library_path} =~ ^@ ]] && ! array_contains_item bundled_dependencies "${dependency_library_path}"; then
+				
+				# Add dependency to bundled_dependencies array if it's not already added
+				add_item_to_array bundled_dependencies "${dependency_library_path}"
+				
+				# Resolve current dependency's dependencies as well
+				resolve_dependencies_for_target "${dependency_library_path}"
+			elif ! array_contains_item external_dependencies "${dependency_library_path}"; then
+				
+				# Add dependency to external_dependencies array if it's not already added
+				add_item_to_array external_dependencies "${dependency_library_path}"
+				
+				# Resolve current dependency's dependencies as well
+				resolve_dependencies_for_target "${dependency_library_path}"
+			fi
+		done < <( otool -L "${dependency_target}" | sed -nE "s/^[ $( printf '\t' )]+(.*)\(.*$/\1/p" 2>&1 )
+	else
+		printf "%s\n" "[ERROR] No such file: ${dependency_target}" >&2
+	fi
 }
 
 resolve_dependency_path() {
@@ -118,8 +125,9 @@ add_item_to_array () {
 	
 	# 1 - Array variable name
 	local array="${1}"
-	
 	shift 1
+	
+	# Add passed item to the array
 	eval "${array}+=( $( printf "'%s' " "${@}" ) )"
 }
 
@@ -140,12 +148,13 @@ array_contains_item() {
 
 clean_and_sort_array() {
 	
-	# 1	- Array variable name
+	# 1 - Array variable name
 	local array="${1}[@]"
 	
 	declare -a newArray
 	for arrayItem in "${!array}"; do
 		if [[ ${arrayItem} =~ \.framework ]]; then
+			
 			# If item contains '.framework' then just add the path to the framework bundle
 			newArray+=( "$( sed -nE 's/^(.*.framework)\/.*$/\1/p' <<< ${arrayItem}  )" )
 		else
@@ -158,6 +167,27 @@ clean_and_sort_array() {
 	
 	# Update passed array with the cleaned and sorted version
 	eval "${1}=( $( printf "'%s' " "${array[@]}" ) )"
+}
+
+find_missing_dependencies_on_volume() {
+	
+	# 1 - Array variable name
+	local array="${1}[@]"
+	
+	# 2 - Array variable name for new array
+	
+	declare -a newArray
+	for arrayItem in "${!array}"; do
+		
+		# Create path to item om target volume
+		itemPathOnTargetVolume=$( sed -E 's/\/+/\//g' <<< "${targetVolumePath}/${arrayItem}" )
+
+		# If item doesn't exist on target volume, add it to newArray
+		if ! [[ -e ${itemPathOnTargetVolume} ]]; then newArray+=( "${arrayItem}" ); fi
+		
+		# Update passed array with missing shared libraries
+		eval "${2}=( $( printf "'%s' " "${newArray[@]}" ) )"
+	done
 }
 
 ###
@@ -197,8 +227,10 @@ fi
 resolve_dependencies_for_target "${targetExecutable}"
 clean_and_sort_array external_dependencies
 clean_and_sort_array bundled_dependencies
+find_missing_dependencies_on_volume external_dependencies missing_external_dependencies
 
-printf "%s\n" "external_dependencies=${external_dependencies[@]}"
-printf "%s\n" "bundled_dependencies=${bundled_dependencies[@]}"
+printf "%s\n" "[Missing Dependencies]
+${missing_external_dependencies[@]}"
+#printf "%s\n" "bundled_dependencies=${bundled_dependencies[@]}"
 
 exit 0
