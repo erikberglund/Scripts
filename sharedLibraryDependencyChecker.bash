@@ -265,7 +265,7 @@ print_usage() {
 	printf "%s\n" "Options:"
 	printf "  %s\t%s\n" "-t" "Path to application (.app) or binary"
 	printf "  %s\t%s\n" "-r" "Path to system volume root"
-	printf "  %s\t%s\n" "-x" "(Optional) Output missing dependencies as regex strings for use with cpio"
+	printf "  %s\t%s\n" "-x" "(Optional) Format output as regex strings for use with cpio"
 	printf "  %s\t%s\n" "-a" "(Optional) Output all dependencies"
 	printf "\n"
 }
