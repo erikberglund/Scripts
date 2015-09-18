@@ -28,7 +28,9 @@
 ###
 
 path_tmp_relational_plist="/tmp/$( uuidgen ).plist"
+path_pwd=$( pwd -P )
 
+declare -a target_executables
 declare -a external_dependencies
 declare -a bundled_dependencies
 declare -a missing_external_dependencies
@@ -51,8 +53,27 @@ resolve_dependencies_for_target() {
 			# Get absolute path to dependency
 			local dependency_library_path=$( resolve_dependency_path "${dependency_path}" "${dependency_target%/*}" )
 			
-			# If dependency_library_path is empty, continue
-			if [[ -n ${dependency_library_path} ]]; then
+			if [[ -L ${dependency_library_path} ]]; then
+				# If dependency path is a symbolic link
+				
+				symlink_path="${dependency_library_path}"
+								
+				while [[ -L ${symlink_path} ]]; do
+					readlink_path=$( readlink "${symlink_path}" )
+					
+					if ! [[ ${readlink_path} =~ ^Versions ]]; then
+						add_item_to_array external_dependencies "${symlink_path}"
+						symlink_path=$( resolve_dependency_path "${readlink_path}" "${symlink_path%/*}" )
+					else
+						break
+					fi
+				done
+				
+				dependency_path="${symlink_path}"
+				dependency_library_path="${symlink_path}"
+			elif [[ -n ${dependency_library_path} ]]; then
+				# If dependency path is not empty
+				
 				if [[ ${dependency_library_path} =~ \.framework ]]; then
 			
 					# If item contains '.framework' then just add the path to the framework bundle
@@ -66,6 +87,7 @@ resolve_dependencies_for_target() {
 				fi
 				/usr/libexec/PlistBuddy -c "Add '""${dependency_library_path_key}:0""' string ${dependency_target}" "${path_tmp_relational_plist}"
 			else
+				# If dependency_library_path is empty, continue
 				continue
 			fi
 			
@@ -113,30 +135,32 @@ resolve_dependency_path() {
 		
 		# Remove the linker variable and any slash prefixes
 		dependency_path=$( sed -E 's,^[^/]*/,,;s/\/$//g' <<< "${dependency_path}" )
+	fi
+	
+	# Check if the dependency_path contains any parent directory notations ( ../../ )
+	if [[ ${dependency_path} =~ \.\./ ]]; then
+		
+		# Read directory paths to arrays with each directory as one item
+		IFS='/' read -a base_path_folders <<< "${base_path:-${2}}"
+		IFS='/' read -a dependency_path_folders <<< "${dependency_path}"
+		
+		# Count number of parent directory steps to remove ( ../../ )
+		count=0
+		for directory in ${dependency_path_folders[*]}; do
+			if [[ ${directory} == .. ]]; then
+				(( count++ ))
+			fi
+		done
 			
-		# Check if the dependency_path contains any parent directory notations ( ../../ )
-		if [[ ${dependency_path} =~ \.\./ ]]; then
-			
-			# Read directory paths to arrays with each directory as one item
-			IFS='/' read -a base_path_folders <<< "${base_path}"
-			IFS='/' read -a dependency_path_folders <<< "${dependency_path}"
-			
-			# Count number of parent directory steps to remove ( ../../ )
-			count=0
-			for directory in ${dependency_path_folders[*]}; do
-				if [[ ${directory} == .. ]]; then
-					(( count++ ))
-				fi
-			done
-				
-			# Remove $count directories from both arrays and join the shortened version to one correct directory path
-			IFS=/ eval 'dependency_path="/${base_path_folders[*]:0:$(( ${#base_path_folders[@]} - count ))}/${dependency_path_folders[*]:${count}}"'
-		else
-			
-			# Don't return a path if dependency_path doesn't contain any parent directory notations
-			# Because then it's just pointing at itself and self already exist
-			unset dependency_path
-		fi
+		# Remove $count directories from both arrays and join the shortened version to one correct directory path
+		IFS=/ eval 'dependency_path="/${base_path_folders[*]:0:$(( ${#base_path_folders[@]} - count ))}/${dependency_path_folders[*]:${count}}"'
+	elif [[ ${dependency_path} == ${1##*/} ]]; then
+		
+		dependency_path="${linker_executable_path}/${dependency_path}"
+		
+		# Don't return a path if dependency_path doesn't contain any parent directory notations
+		# Because then it's just pointing at itself and self already exist
+		#unset dependency_path
 	fi
 	
 	# Return path
@@ -218,7 +242,7 @@ parse_command_line_options() {
 		case ${opt} in
 			a)  outputAll="yes" ;;
 			r)	outputReferences="yes" ;;
-			t)	targetExecutable="${OPTARG}" ;;
+			t)	target_executables+=( "${OPTARG}" ) ;;
 			v)	targetVolumePath="${OPTARG}" ;;
 			x)	outputRegex="yes" ;;
 			\?)	print_usage; exit 1 ;;
@@ -230,32 +254,37 @@ parse_command_line_options() {
 }
 
 verfiy_command_line_options() {
-	if [[ -z ${targetExecutable} ]]; then
-	    printf "%s\n" "Input variable 1 targetExecutable=${targetExecutable} is not valid!";
-		print_usage
-	    exit 1
-	elif [[ ${targetExecutable##*.} == app ]]; then
-		targetExecutableName=$( /usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "${targetExecutable}/Contents/Info.plist" 2>&1 )
-		if [[ -n ${targetExecutableName} ]]; then
-			targetExecutable="${targetExecutable}/Contents/MacOS/${targetExecutableName}"
-			if ! [[ -f ${targetExecutable} ]]; then
-				printf "%s\n" "Could not find executable from App Bundle!"
+	for (( i=0; i<${#target_executables[@]}; i++)); do
+		targetExecutable="${target_executables[i]}"
+		if [[ -z ${targetExecutable} ]]; then
+		    printf "%s\n" "Input variable 1 targetExecutable=${targetExecutable} is not valid!";
+			print_usage
+		    exit 1
+		elif [[ ${targetExecutable##*.} == app ]]; then
+			targetExecutableName=$( /usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "${targetExecutable}/Contents/Info.plist" 2>&1 )
+			if [[ -n ${targetExecutableName} ]]; then
+				targetExecutable="${targetExecutable}/Contents/MacOS/${targetExecutableName}"
+				if ! [[ -f ${targetExecutable} ]]; then
+					printf "%s\n" "Could not find executable from App Bundle!"
+					printf "%s\n" "Try passing the executable path directly."
+					print_usage
+					exit 1
+				fi
+			else
+				printf "%s\n" "Could not get CFBundleExecutable from ${targetExecutable} from App Bundle!"
 				printf "%s\n" "Try passing the executable path directly."
 				print_usage
-				exit 1
+				exit 1	
 			fi
-		else
-			printf "%s\n" "Could not get CFBundleExecutable from ${targetExecutable} from App Bundle!"
-			printf "%s\n" "Try passing the executable path directly."
-			print_usage
-			exit 1	
 		fi
-	fi
+	done
 	
-	if [[ -z ${targetVolumePath} ]] || ! [[ -d ${targetVolumePath} ]]; then
-	    printf "%s\n" "Input variable 2 targetVolumePath=${targetVolumePath} is not valid!";
-		print_usage
-	    exit 1
+	if [[ ${outputAll} != yes ]]; then
+		if [[ -z ${targetVolumePath} ]] || ! [[ -d ${targetVolumePath} ]]; then
+		    printf "%s\n" "Input variable 2 targetVolumePath=${targetVolumePath} is not valid!";
+			print_usage
+		    exit 1
+		fi
 	fi
 	
 	if ! [[ -f /usr/bin/otool ]]; then
@@ -278,7 +307,10 @@ print_usage() {
 ###
 
 parse_command_line_options "${@}"
-resolve_dependencies_for_target "${targetExecutable}"
+for (( i=0; i<${#target_executables[@]}; i++)); do
+	targetExecutable="${target_executables[i]}"
+	resolve_dependencies_for_target "${targetExecutable}"
+done
 clean_and_sort_array external_dependencies
 clean_and_sort_array bundled_dependencies
 if [[ ${outputAll} != yes ]]; then
