@@ -18,8 +18,10 @@
 #
 # Options:
 #  -t	Path to application (.app) or binary
-#  -r	Path to system volume root
-#  -x	(Optional) Output missing dependencies as regex strings for use with cpio
+#  -v	Path to system volume root
+#  -x	(Optional) Format output as regex strings for use with cpio
+#  -a	(Optional) Output all dependencies for target
+#  -r	(Optional) Output what file(s) depends on each output entry
 
 ###
 ### VARIABLES
@@ -212,11 +214,12 @@ find_missing_dependencies_on_volume() {
 }
 
 parse_command_line_options() {
-	while getopts "t:r:xa" opt; do
+	while getopts "t:v:xar" opt; do
 		case ${opt} in
 			a)  outputAll="yes" ;;
+			r)	outputReferences="yes" ;;
 			t)	targetExecutable="${OPTARG}" ;;
-			r)	targetVolumePath="${OPTARG}" ;;
+			v)	targetVolumePath="${OPTARG}" ;;
 			x)	outputRegex="yes" ;;
 			\?)	print_usage; exit 1 ;;
 			:) print_usage; exit 1 ;;
@@ -264,7 +267,7 @@ print_usage() {
 	printf "\n%s\n\n" "Usage: ./${0##*/} [options] <argv>..."
 	printf "%s\n" "Options:"
 	printf "  %s\t%s\n" "-t" "Path to application (.app) or binary"
-	printf "  %s\t%s\n" "-r" "Path to system volume root"
+	printf "  %s\t%s\n" "-v" "Path to system volume root"
 	printf "  %s\t%s\n" "-x" "(Optional) Format output as regex strings for use with cpio"
 	printf "  %s\t%s\n" "-a" "(Optional) Output all dependencies"
 	printf "\n"
@@ -289,14 +292,16 @@ if [[ ${outputRegex} != yes ]]; then
 			printf "\n%s\n" "[${targetExecutable} - All Dependencies]"
 			for ((i=0; i<${#external_dependencies[@]}; i++)); do
 				printf "\t%s\n" "$((${i}+1)) ${external_dependencies[i]}"
-				printf "\n\t\t%s\n" "## Referenced by the following sources ##"
-				oldIFS=${IFS}; IFS=$'\n'
-				current_key_value=( $( /usr/libexec/PlistBuddy -c "Print '""${external_dependencies[i]}""'" "${path_tmp_relational_plist}" | grep -Ev [{}] | sed -E 's/^[ $( printf '\t' )]*//' 2>&1 ) )
-				IFS=${oldIFS}
-				for ((j=0; j<${#current_key_value[@]}; j++)); do
-					printf "\t\t%s\n" "${current_key_value[j]}"
-				done
-				printf "\n"
+				if [[ ${outputReferences} == yes ]]; then
+					printf "\n\t\t%s\n" "## Referenced by the following sources ##"
+					oldIFS=${IFS}; IFS=$'\n'
+					current_key_value=( $( /usr/libexec/PlistBuddy -c "Print '""${external_dependencies[i]}""'" "${path_tmp_relational_plist}" | grep -Ev [{}] | sed -E 's/^[ $( printf '\t' )]*//' 2>&1 ) )
+					IFS=${oldIFS}
+					for ((j=0; j<${#current_key_value[@]}; j++)); do
+						printf "\t\t%s\n" "${current_key_value[j]}"
+					done
+					printf "\n"
+				fi
 			done
 		else
 			printf "\n%s\n" "[${1##*/} - No Dependencies]"
@@ -306,14 +311,16 @@ if [[ ${outputRegex} != yes ]]; then
 			printf "\n%s\n" "[${targetExecutable} - Missing Dependencies]"
 			for ((i=0; i<missing_external_dependencies_count; i++)); do
 				printf "\t%s\n" "$((${i}+1)) ${missing_external_dependencies[i]}"
-				printf "\n\t\t%s\n" "## Referenced by the following sources ##"
-				oldIFS=${IFS}; IFS=$'\n'
-				current_key_value=( $( /usr/libexec/PlistBuddy -c "Print '""${missing_external_dependencies[i]}""'" "${path_tmp_relational_plist}" | grep -Ev [{}] | sed -E 's/^[ $( printf '\t' )]*//' 2>&1 ) )
-				IFS=${oldIFS}
-				for ((j=0; j<${#current_key_value[@]}; j++)); do
-					printf "\t\t%s\n" "${current_key_value[j]}"
-				done
-				printf "\n"
+				if [[ ${outputReferences} == yes ]]; then
+					printf "\n\t\t%s\n" "## Referenced by the following sources ##"
+					oldIFS=${IFS}; IFS=$'\n'
+					current_key_value=( $( /usr/libexec/PlistBuddy -c "Print '""${missing_external_dependencies[i]}""'" "${path_tmp_relational_plist}" | grep -Ev [{}] | sed -E 's/^[ $( printf '\t' )]*//' 2>&1 ) )
+					IFS=${oldIFS}
+					for ((j=0; j<${#current_key_value[@]}; j++)); do
+						printf "\t\t%s\n" "${current_key_value[j]}"
+					done
+					printf "\n"
+				fi
 			done
 		else
 			printf "\n%s\n" "[${1##*/} - All Dependencies Exist]"
@@ -322,26 +329,18 @@ if [[ ${outputRegex} != yes ]]; then
 else
 	if [[ ${outputAll} == yes ]]; then
 		if [[ ${#external_dependencies[@]} -ne 0 ]]; then
-			printf "\n%s\n" "[${targetExecutable} - All Dependencies]"
 			for ((i=0; i<${#external_dependencies[@]}; i++)); do
-				printf "\t%s\n" "$((${i}+1)) ${external_dependencies[i]}"
-				printf "\n\t\t%s\n" "## Referenced by the following sources ##"
-				oldIFS=${IFS}; IFS=$'\n'
-				current_key_value=( $( /usr/libexec/PlistBuddy -c "Print '""${external_dependencies[i]}""'" "${path_tmp_relational_plist}" | grep -Ev [{}] | sed -E 's/^[ $( printf '\t' )]*//' 2>&1 ) )
-				IFS=${oldIFS}
-				for ((j=0; j<${#current_key_value[@]}; j++)); do
-					printf "\t\t%s\n" "${current_key_value[j]}"
-				done
-				printf "\n"
+				dependency_folder=${external_dependencies[i]%/*}
+				dependency_item=$( sed 's/[.[\*^$()+?{|]/\\&/g' <<< "${external_dependencies[i]##*/}" )
+				printf "%s\n" ".*/${dependency_folder##*/}/${dependency_item}.*"
 			done
-		else
-			printf "\n%s\n" "[${1##*/} - No Dependencies]"
 		fi
 	else
 		if [[ ${missing_external_dependencies_count} -ne 0 ]]; then
 			for ((i=0; i<missing_external_dependencies_count; i++)); do
 				dependency_folder=${missing_external_dependencies[i]%/*}
-				printf "%s\n" ".*/${dependency_folder##*/}/${missing_external_dependencies[i]##*/}.*"
+				dependency_item=$( sed 's/[.[\*^$()+?{|]/\\&/g' <<< "${missing_external_dependencies[i]##*/}" )
+				printf "%s\n" ".*/${dependency_folder##*/}/${dependency_item}.*"
 			done
 		fi
 	fi
