@@ -281,7 +281,9 @@ parse_command_line_options "${@}"
 resolve_dependencies_for_target "${targetExecutable}"
 clean_and_sort_array external_dependencies
 clean_and_sort_array bundled_dependencies
-find_missing_dependencies_on_volume external_dependencies missing_external_dependencies
+if [[ ${outputAll} != yes ]]; then
+	find_missing_dependencies_on_volume external_dependencies missing_external_dependencies
+fi
 
 # Print result
 missing_external_dependencies_count=${#missing_external_dependencies[@]}
