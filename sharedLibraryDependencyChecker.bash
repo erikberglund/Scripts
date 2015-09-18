@@ -269,6 +269,8 @@ verfiy_command_line_options() {
 					printf "%s\n" "Try passing the executable path directly."
 					print_usage
 					exit 1
+				else
+					target_executables[${i}]="${targetExecutable}"
 				fi
 			else
 				printf "%s\n" "Could not get CFBundleExecutable from ${targetExecutable} from App Bundle!"
@@ -365,7 +367,7 @@ else
 		if [[ ${#external_dependencies[@]} -ne 0 ]]; then
 			for ((i=0; i<${#external_dependencies[@]}; i++)); do
 				dependency_folder=${external_dependencies[i]%/*}
-				dependency_item=$( sed 's/[.[\*^$()+?{|]/\\&/g' <<< "${external_dependencies[i]##*/}" )
+				dependency_item=$( sed 's/[+]/\\&/g' <<< "${external_dependencies[i]##*/}" )
 				printf "%s\n" ".*/${dependency_folder##*/}/${dependency_item}.*"
 			done
 		fi
@@ -373,7 +375,7 @@ else
 		if [[ ${missing_external_dependencies_count} -ne 0 ]]; then
 			for ((i=0; i<missing_external_dependencies_count; i++)); do
 				dependency_folder=${missing_external_dependencies[i]%/*}
-				dependency_item=$( sed 's/[.[\*^$()+?{|]/\\&/g' <<< "${missing_external_dependencies[i]##*/}" )
+				dependency_item=$( sed 's/[+]/\\&/g' <<< "${missing_external_dependencies[i]##*/}" )
 				printf "%s\n" ".*/${dependency_folder##*/}/${dependency_item}.*"
 			done
 		fi
