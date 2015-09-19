@@ -18,17 +18,17 @@
 #
 # Options:
 #  -t	Path to application (.app) or binary
-#  -v	Path to system volume root
-#  -x	(Optional) Format output as regex strings for use with cpio
-#  -a	(Optional) Output all dependencies for target
+#  -v	Path to system volume root (Optional/Ignored if -a is used) 
+#  -x	(Optional) Format output as regex strings
+#  -a	(Optional) Output all dependencies for target(s)
 #  -r	(Optional) Output what file(s) depends on each output entry
+#  -f	(Optional) Output full paths for all files (Used to turn off the default behaviour of only outputting path to the .framework bondle for files contained within)
 
 ###
 ### VARIABLES
 ###
 
 path_tmp_relational_plist="/tmp/$( uuidgen ).plist"
-path_pwd=$( pwd -P )
 
 declare -a target_executables
 declare -a external_dependencies
@@ -74,7 +74,7 @@ resolve_dependencies_for_target() {
 			elif [[ -n ${dependency_library_path} ]]; then
 				# If dependency path is not empty
 				
-				if [[ ${dependency_library_path} =~ \.framework ]]; then
+				if [[ ${dependency_library_path} =~ \.framework ]] && [[ ${outputAbsolutePath} != yes ]]; then
 			
 					# If item contains '.framework' then just add the path to the framework bundle
 					dependency_library_path_key=$( sed -nE 's/^(.*.framework)\/.*$/\1/p' <<< ${dependency_library_path}  )
@@ -199,7 +199,7 @@ clean_and_sort_array() {
 	
 	declare -a newArray
 	for arrayItem in "${!array}"; do
-		if [[ ${arrayItem} =~ \.framework ]]; then
+		if [[ ${arrayItem} =~ \.framework ]] && [[ ${outputAbsolutePath} != yes ]]; then
 			
 			# If item contains '.framework' then just add the path to the framework bundle
 			newArray+=( "$( sed -nE 's/^(.*.framework)\/.*$/\1/p' <<< ${arrayItem}  )" )
@@ -238,9 +238,10 @@ find_missing_dependencies_on_volume() {
 }
 
 parse_command_line_options() {
-	while getopts "t:v:xar" opt; do
+	while getopts "afrt:v:x" opt; do
 		case ${opt} in
 			a)  outputAll="yes" ;;
+			f)  outputAbsolutePath="yes" ;;
 			r)	outputReferences="yes" ;;
 			t)	target_executables+=( "${OPTARG}" ) ;;
 			v)	targetVolumePath="${OPTARG}" ;;
@@ -298,9 +299,11 @@ print_usage() {
 	printf "\n%s\n\n" "Usage: ./${0##*/} [options] <argv>..."
 	printf "%s\n" "Options:"
 	printf "  %s\t%s\n" "-t" "Path to application (.app) or binary"
-	printf "  %s\t%s\n" "-v" "Path to system volume root"
-	printf "  %s\t%s\n" "-x" "(Optional) Format output as regex strings for use with cpio"
-	printf "  %s\t%s\n" "-a" "(Optional) Output all dependencies"
+	printf "  %s\t%s\n" "-v" "Path to system volume root (Optional/Ignored if -a is used)"
+	printf "  %s\t%s\n" "-x" "(Optional) Format output as regex strings"
+	printf "  %s\t%s\n" "-a" "(Optional) Output all dependencies for target(s)"
+	printf "  %s\t%s\n" "-r" "(Optional) Output what file(s) depends on each output entry"
+	printf "  %s\t%s\n" "-f" "(Optional) Output full paths for all files (Used to turn off the default behaviour of only outputting path to the .framework bondle for files contained within)"
 	printf "\n"
 }
 
@@ -368,7 +371,11 @@ else
 			for ((i=0; i<${#external_dependencies[@]}; i++)); do
 				dependency_folder=${external_dependencies[i]%/*}
 				dependency_item=$( sed 's/[+]/\\&/g' <<< "${external_dependencies[i]##*/}" )
-				printf "%s\n" ".*/${dependency_folder##*/}/${dependency_item}.*"
+				if [[ ${outputAbsolutePath} == yes ]] && [[ ${dependency_folder} =~ .framework ]]; then
+					printf "%s\n" ".*/$( sed -nE 's/^.*\/(.*.framework(\/.*$|$))/\1/p' <<< ${dependency_folder} )/${dependency_item}.*"
+				else
+					printf "%s\n" ".*/${dependency_folder##*/}/${dependency_item}.*"
+				fi
 			done
 		fi
 	else
@@ -376,7 +383,11 @@ else
 			for ((i=0; i<missing_external_dependencies_count; i++)); do
 				dependency_folder=${missing_external_dependencies[i]%/*}
 				dependency_item=$( sed 's/[+]/\\&/g' <<< "${missing_external_dependencies[i]##*/}" )
-				printf "%s\n" ".*/${dependency_folder##*/}/${dependency_item}.*"
+				if [[ ${outputAbsolutePath} == yes ]]; then
+					printf "%s\n" ".*/$( sed -nE 's/^.*\/(.*.framework(\/.*$|$))/\1/p' <<< ${dependency_folder} )/${dependency_item}.*"
+				else
+					printf "%s\n" ".*/${dependency_folder##*/}/${dependency_item}.*"
+				fi
 			done
 		fi
 	fi
