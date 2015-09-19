@@ -17,8 +17,8 @@
 # Usage: ./sharedLibraryDependencyChecker.bash [options] <argv>...
 #
 # Options:
-#  -t	Path to application (.app) or binary
-#  -v	Path to system volume root (Optional/Ignored if -a is used) 
+#  -t	[Required] Path to application (.app) or binary. Multiple paths can be defined with additional -t args.
+#  -v	(Optional/Ignored if -a is used) Path to system volume root
 #  -x	(Optional) Format output as regex strings
 #  -a	(Optional) Output all dependencies for target(s)
 #  -r	(Optional) Output what file(s) depends on each output entry
@@ -298,8 +298,8 @@ verfiy_command_line_options() {
 print_usage() {
 	printf "\n%s\n\n" "Usage: ./${0##*/} [options] <argv>..."
 	printf "%s\n" "Options:"
-	printf "  %s\t%s\n" "-t" "Path to application (.app) or binary"
-	printf "  %s\t%s\n" "-v" "Path to system volume root (Optional/Ignored if -a is used)"
+	printf "  %s\t%s\n" "-t" "[Required] Path to application (.app) or binary. Multiple paths can be defined with additional -t args."
+	printf "  %s\t%s\n" "-v" "(Optional/Ignored if -a is used) Path to system volume root"
 	printf "  %s\t%s\n" "-x" "(Optional) Format output as regex strings"
 	printf "  %s\t%s\n" "-a" "(Optional) Output all dependencies for target(s)"
 	printf "  %s\t%s\n" "-r" "(Optional) Output what file(s) depends on each output entry"
