@@ -159,14 +159,10 @@ resolve_dependency_path() {
 	elif [[ ${dependency_path} == ${1##*/} ]]; then
 		
 		dependency_path="${linker_executable_path}/${dependency_path}"
-		
-		# Don't return a path if dependency_path doesn't contain any parent directory notations
-		# Because then it's just pointing at itself and self already exist
-		#unset dependency_path
 	fi
 	
-	# Return path
-	echo -n "${dependency_path}"
+	# Return path and remove extra '/' in path
+	echo -n "${dependency_path}" | sed 's/\/\//\//g'
 }
 
 add_item_to_array () {
