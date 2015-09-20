@@ -24,6 +24,7 @@
 #  -r			(Optional) Output what file(s) depends on each output entry
 #  -f			(Optional) Output full paths for all files (Used to turn off the default behaviour of only outputting path to the .framework bundle for files contained within)
 #  -e [regex]	(Optional) Output full paths for all files matched by [regex] (Used to turn off the default behaviour for matching files of only outputting path to the .framework bundle for files contained within)
+#  -i [regex]	(Optional) Igore item(s) matching [regex] in output
 
 ###
 ### VARIABLES
@@ -239,11 +240,12 @@ find_missing_dependencies_on_volume() {
 }
 
 parse_command_line_options() {
-	while getopts "ae:frt:v:x" opt; do
+	while getopts "ae:fi:rt:v:x" opt; do
 		case ${opt} in
 			a)  outputAll="yes" ;;
 			e)  outputAbsolutePathForRegex="${OPTARG}" ;;
 			f)  outputAbsolutePath="yes" ;;
+			i)  outputIgnoreRegex="${OPTARG}" ;;
 			r)	outputReferences="yes" ;;
 			t)	target_executables+=( "${OPTARG}" ) ;;
 			v)	targetVolumePath="${OPTARG}" ;;
@@ -307,6 +309,7 @@ print_usage() {
 	printf "  %s\t\t%s\n" "-r" "(Optional) Output what file(s) depends on each output entry"
 	printf "  %s\t\t%s\n" "-f" "(Optional) Output full paths for all files (Used to turn off the default behaviour of only outputting path to the .framework bondle for files contained within)"
 	printf "  %s\t%s\n" "-e [regex]" "(Optional) Output full paths for all files matched by [regex] (Used to turn off the default behaviour for matching files of only outputting path to the .framework bundle for files contained within)"
+	printf "  %s\t%s\n" "-i [regex]" "(Optional) Igore item(s) matching [regex] in output"
 	printf "\n"
 }
 
@@ -333,6 +336,9 @@ if [[ ${outputRegex} != yes ]]; then
 		if [[ ${#external_dependencies[@]} -ne 0 ]]; then
 			printf "\n%s\n" "[${targetExecutable} - All Dependencies]"
 			for ((i=0; i<${#external_dependencies[@]}; i++)); do
+				if [[ -n ${outputIgnoreRegex} && ${external_dependencies[i]} =~ ${outputIgnoreRegex} ]]; then
+					continue
+				fi
 				printf "\t%s\n" "$((${i}+1)) ${external_dependencies[i]}"
 				if [[ ${outputReferences} == yes ]]; then
 					printf "\n\t\t%s\n" "## Referenced by the following sources ##"
@@ -352,6 +358,9 @@ if [[ ${outputRegex} != yes ]]; then
 		if [[ ${missing_external_dependencies_count} -ne 0 ]]; then
 			printf "\n%s\n" "[${targetExecutable} - Missing Dependencies]"
 			for ((i=0; i<missing_external_dependencies_count; i++)); do
+				if [[ -n ${outputIgnoreRegex} && ${missing_external_dependencies[i]} =~ ${outputIgnoreRegex} ]]; then
+					continue
+				fi
 				printf "\t%s\n" "$((${i}+1)) ${missing_external_dependencies[i]}"
 				if [[ ${outputReferences} == yes ]]; then
 					printf "\n\t\t%s\n" "## Referenced by the following sources ##"
@@ -372,6 +381,9 @@ else
 	if [[ ${outputAll} == yes ]]; then
 		if [[ ${#external_dependencies[@]} -ne 0 ]]; then
 			for ((i=0; i<${#external_dependencies[@]}; i++)); do
+				if [[ -n ${outputIgnoreRegex} && ${external_dependencies[i]} =~ ${outputIgnoreRegex} ]]; then
+					continue
+				fi
 				dependency_folder=${external_dependencies[i]%/*}
 				dependency_item=$( sed 's/[+]/\\&/g' <<< "${external_dependencies[i]##*/}" )
 				if [[ ( ${outputAbsolutePath} == yes || ${dependency_folder} =~ ${outputAbsolutePathForRegex} ) && ${dependency_folder} =~ .framework ]]; then
@@ -384,6 +396,9 @@ else
 	else
 		if [[ ${missing_external_dependencies_count} -ne 0 ]]; then
 			for ((i=0; i<missing_external_dependencies_count; i++)); do
+				if [[ -n ${outputIgnoreRegex} && ${missing_external_dependencies[i]} =~ ${outputIgnoreRegex} ]]; then
+					continue
+				fi
 				dependency_folder=${missing_external_dependencies[i]%/*}
 				dependency_item=$( sed 's/[+]/\\&/g' <<< "${missing_external_dependencies[i]##*/}" )
 				if [[ ${outputAbsolutePath} == yes || ${dependency_folder} =~ ${outputAbsolutePathForRegex} ]]; then
