@@ -17,12 +17,13 @@
 # Usage: ./sharedLibraryDependencyChecker.bash [options] <argv>...
 #
 # Options:
-#  -t	[Required] Path to application (.app) or binary. Multiple paths can be defined with additional -t args.
-#  -v	(Optional/Ignored if -a is used) Path to system volume root
-#  -x	(Optional) Format output as regex strings
-#  -a	(Optional) Output all dependencies for target(s)
-#  -r	(Optional) Output what file(s) depends on each output entry
-#  -f	(Optional) Output full paths for all files (Used to turn off the default behaviour of only outputting path to the .framework bondle for files contained within)
+#  -t			[Required] Path to application (.app) or binary. Multiple paths can be defined with additional -t args.
+#  -v			(Optional/Ignored if -a is used) Path to system volume root
+#  -x			(Optional) Format output as regex strings
+#  -a			(Optional) Output all dependencies for target(s)
+#  -r			(Optional) Output what file(s) depends on each output entry
+#  -f			(Optional) Output full paths for all files (Used to turn off the default behaviour of only outputting path to the .framework bundle for files contained within)
+#  -e [regex]	(Optional) Output full paths for all files matched by [regex] (Used to turn off the default behaviour for matching files of only outputting path to the .framework bundle for files contained within)
 
 ###
 ### VARIABLES
@@ -199,7 +200,7 @@ clean_and_sort_array() {
 	
 	declare -a newArray
 	for arrayItem in "${!array}"; do
-		if [[ ${arrayItem} =~ \.framework ]] && [[ ${outputAbsolutePath} != yes ]]; then
+		if [[ ${arrayItem} =~ \.framework && ( ${outputAbsolutePath} != yes && ! ${arrayItem} =~ ${outputAbsolutePathForRegex} ) ]]; then
 			
 			# If item contains '.framework' then just add the path to the framework bundle
 			newArray+=( "$( sed -nE 's/^(.*.framework)\/.*$/\1/p' <<< ${arrayItem}  )" )
@@ -238,9 +239,10 @@ find_missing_dependencies_on_volume() {
 }
 
 parse_command_line_options() {
-	while getopts "afrt:v:x" opt; do
+	while getopts "ae:frt:v:x" opt; do
 		case ${opt} in
 			a)  outputAll="yes" ;;
+			e)  outputAbsolutePathForRegex="${OPTARG}" ;;
 			f)  outputAbsolutePath="yes" ;;
 			r)	outputReferences="yes" ;;
 			t)	target_executables+=( "${OPTARG}" ) ;;
@@ -298,12 +300,13 @@ verfiy_command_line_options() {
 print_usage() {
 	printf "\n%s\n\n" "Usage: ./${0##*/} [options] <argv>..."
 	printf "%s\n" "Options:"
-	printf "  %s\t%s\n" "-t" "[Required] Path to application (.app) or binary. Multiple paths can be defined with additional -t args."
-	printf "  %s\t%s\n" "-v" "(Optional/Ignored if -a is used) Path to system volume root"
-	printf "  %s\t%s\n" "-x" "(Optional) Format output as regex strings"
-	printf "  %s\t%s\n" "-a" "(Optional) Output all dependencies for target(s)"
-	printf "  %s\t%s\n" "-r" "(Optional) Output what file(s) depends on each output entry"
-	printf "  %s\t%s\n" "-f" "(Optional) Output full paths for all files (Used to turn off the default behaviour of only outputting path to the .framework bondle for files contained within)"
+	printf "  %s\t\t%s\n" "-t" "[Required] Path to application (.app) or binary. Multiple paths can be defined with additional -t args."
+	printf "  %s\t\t%s\n" "-v" "(Optional/Ignored if -a is used) Path to system volume root"
+	printf "  %s\t\t%s\n" "-x" "(Optional) Format output as regex strings"
+	printf "  %s\t\t%s\n" "-a" "(Optional) Output all dependencies for target(s)"
+	printf "  %s\t\t%s\n" "-r" "(Optional) Output what file(s) depends on each output entry"
+	printf "  %s\t\t%s\n" "-f" "(Optional) Output full paths for all files (Used to turn off the default behaviour of only outputting path to the .framework bondle for files contained within)"
+	printf "  %s\t%s\n" "-e [regex]" "(Optional) Output full paths for all files matched by [regex] (Used to turn off the default behaviour for matching files of only outputting path to the .framework bundle for files contained within)"
 	printf "\n"
 }
 
@@ -371,7 +374,7 @@ else
 			for ((i=0; i<${#external_dependencies[@]}; i++)); do
 				dependency_folder=${external_dependencies[i]%/*}
 				dependency_item=$( sed 's/[+]/\\&/g' <<< "${external_dependencies[i]##*/}" )
-				if [[ ${outputAbsolutePath} == yes ]] && [[ ${dependency_folder} =~ .framework ]]; then
+				if [[ ( ${outputAbsolutePath} == yes || ${dependency_folder} =~ ${outputAbsolutePathForRegex} ) && ${dependency_folder} =~ .framework ]]; then
 					printf "%s\n" ".*/$( sed -nE 's/^.*\/(.*.framework(\/.*$|$))/\1/p' <<< ${dependency_folder} )/${dependency_item}.*"
 				else
 					printf "%s\n" ".*/${dependency_folder##*/}/${dependency_item}.*"
@@ -383,7 +386,7 @@ else
 			for ((i=0; i<missing_external_dependencies_count; i++)); do
 				dependency_folder=${missing_external_dependencies[i]%/*}
 				dependency_item=$( sed 's/[+]/\\&/g' <<< "${missing_external_dependencies[i]##*/}" )
-				if [[ ${outputAbsolutePath} == yes ]]; then
+				if [[ ${outputAbsolutePath} == yes || ${dependency_folder} =~ ${outputAbsolutePathForRegex} ]]; then
 					printf "%s\n" ".*/$( sed -nE 's/^.*\/(.*.framework(\/.*$|$))/\1/p' <<< ${dependency_folder} )/${dependency_item}.*"
 				else
 					printf "%s\n" ".*/${dependency_folder##*/}/${dependency_item}.*"
