@@ -20,11 +20,13 @@
 #  -t			[Required] Path to application (.app) or binary. Multiple paths can be defined with additional -t args.
 #  -v			(Optional/Ignored if -a is used) Path to system volume root
 #  -x			(Optional) Format output as regex strings
+#  -X			(Optional) Format output as regex strings surrounded by xml string tags (<string>regex</string>)
 #  -a			(Optional) Output all dependencies for target(s)
 #  -r			(Optional) Output what file(s) depends on each output entry
 #  -f			(Optional) Output full paths for all files (Used to turn off the default behaviour of only outputting path to the .framework bundle for files contained within)
 #  -e [regex]	(Optional) Output full paths for all files matched by [regex] (Used to turn off the default behaviour for matching files of only outputting path to the .framework bundle for files contained within)
 #  -i [regex]	(Optional) Igore item(s) matching [regex] in output
+
 
 ###
 ### VARIABLES
@@ -236,7 +238,7 @@ find_missing_dependencies_on_volume() {
 }
 
 parse_command_line_options() {
-	while getopts "ae:fi:rt:v:x" opt; do
+	while getopts "ae:fi:rt:v:xX" opt; do
 		case ${opt} in
 			a)  outputAll="yes" ;;
 			e)  outputAbsolutePathForRegex="${OPTARG}" ;;
@@ -246,6 +248,7 @@ parse_command_line_options() {
 			t)	target_executables+=( "${OPTARG}" ) ;;
 			v)	targetVolumePath="${OPTARG}" ;;
 			x)	outputRegex="yes" ;;
+			X)  outputRegex="yes"; outputRegexXML="yes";;
 			\?)	print_usage; exit 1 ;;
 			:) print_usage; exit 1 ;;
 		esac
@@ -292,6 +295,7 @@ verfiy_command_line_options() {
 	
 	if ! [[ -f /usr/bin/otool ]]; then
 		printf "%s\n" "Could not find otool"
+		exit 1
 	fi
 }
 
@@ -301,6 +305,7 @@ print_usage() {
 	printf "  %s\t\t%s\n" "-t" "[Required] Path to application (.app) or binary. Multiple paths can be defined with additional -t args."
 	printf "  %s\t\t%s\n" "-v" "(Optional/Ignored if -a is used) Path to system volume root"
 	printf "  %s\t\t%s\n" "-x" "(Optional) Format output as regex strings"
+	printf "  %s\t\t%s\n" "-X" "(Optional) Format output as regex strings surrounded by xml string tags (<string>regex</string>)"
 	printf "  %s\t\t%s\n" "-a" "(Optional) Output all dependencies for target(s)"
 	printf "  %s\t\t%s\n" "-r" "(Optional) Output what file(s) depends on each output entry"
 	printf "  %s\t\t%s\n" "-f" "(Optional) Output full paths for all files (Used to turn off the default behaviour of only outputting path to the .framework bondle for files contained within)"
@@ -374,6 +379,10 @@ if [[ ${outputRegex} != yes ]]; then
 		fi
 	fi
 else
+	if [[ ${outputRegexXML} == yes ]]; then
+		outputPrefix="<string>"
+		outputSuffix="</string>"
+	fi
 	if [[ ${outputAll} == yes ]]; then
 		if [[ ${#external_dependencies[@]} -ne 0 ]]; then
 			for ((i=0; i<${#external_dependencies[@]}; i++)); do
@@ -383,9 +392,9 @@ else
 				dependency_folder=${external_dependencies[i]%/*}
 				dependency_item=$( sed 's/[+]/\\&/g' <<< "${external_dependencies[i]##*/}" )
 				if [[ ( ${outputAbsolutePath} == yes || ${dependency_folder} =~ ${outputAbsolutePathForRegex} ) && ${dependency_folder} =~ .framework ]]; then
-					printf "%s\n" ".*/$( sed -nE 's/^.*\/(.*.framework(\/.*$|$))/\1/p' <<< ${dependency_folder} )/${dependency_item}.*"
+					printf "%s\n" "${outputPrefix}.*/$( sed -nE 's/^.*\/(.*.framework(\/.*$|$))/\1/p' <<< ${dependency_folder} )/${dependency_item}.*${outputSuffix}"
 				else
-					printf "%s\n" ".*/${dependency_folder##*/}/${dependency_item}.*"
+					printf "%s\n" "${outputPrefix}.*/${dependency_folder##*/}/${dependency_item}.*${outputSuffix}"
 				fi
 			done
 		fi
@@ -398,9 +407,9 @@ else
 				dependency_folder=${missing_external_dependencies[i]%/*}
 				dependency_item=$( sed 's/[+]/\\&/g' <<< "${missing_external_dependencies[i]##*/}" )
 				if [[ ${outputAbsolutePath} == yes || ${dependency_folder} =~ ${outputAbsolutePathForRegex} ]]; then
-					printf "%s\n" ".*/$( sed -nE 's/^.*\/(.*.framework(\/.*$|$))/\1/p' <<< ${dependency_folder} )/${dependency_item}.*"
+					printf "%s\n" "${outputPrefix}.*/$( sed -nE 's/^.*\/(.*.framework(\/.*$|$))/\1/p' <<< ${dependency_folder} )/${dependency_item}.*${outputSuffix}"
 				else
-					printf "%s\n" ".*/${dependency_folder##*/}/${dependency_item}.*"
+					printf "%s\n" "${outputPrefix}.*/${dependency_folder##*/}/${dependency_item}.*${outputSuffix}"
 				fi
 			done
 		fi
