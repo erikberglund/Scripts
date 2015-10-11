@@ -44,10 +44,10 @@ userAutoLogin="yes"
 
 # Set up all variables passed by installer
 # More info here on page 50: https://developer.apple.com/legacy/library/documentation/DeveloperTools/Conceptual/SoftwareDistribution4/SoftwareDistribution4.pdf
-installerPackagePath="${1}"  # (unused) Full path to the installation package the Installer application is processing. Exanoke: 
-destinationPath="${2}"       # (unused) Full path to the installation destination. Example: /Applications
+installerPackagePath="${1}"  # Full path to the installation package the Installer application is processing. Exanoke: 
+destinationPath="${2}"       # Full path to the installation destination. Example: /Applications
 targetVolumePath="${3}"      # Installation volume (or mountpoint) to receive the payload
-rootPath="${4}"              # (unused) The root directory for the system. Example: /
+rootPath="${4}"              # The root directory for the system. Example: /
 
 # Check that we get a valid volume path as targetVolumePath, else exit.
 if [[ -z ${targetVolumePath} ]] || ! [[ -d ${targetVolumePath} ]]; then

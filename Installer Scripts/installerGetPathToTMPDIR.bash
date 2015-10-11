@@ -11,6 +11,17 @@
 # It will get the value of the current users's variable TMPDIR that is not passed as in the env to the script. 
 
 ###
+### AUTOMATIC VARIABLES
+###
+
+# Set up all variables passed by installer
+# More info here on page 50: https://developer.apple.com/legacy/library/documentation/DeveloperTools/Conceptual/SoftwareDistribution4/SoftwareDistribution4.pdf
+installerPackagePath="${1}"  # Full path to the installation package the Installer application is processing. Exanoke: 
+destinationPath="${2}"       # Full path to the installation destination. Example: /Applications
+targetVolumePath="${3}"      # Installation volume (or mountpoint) to receive the payload
+rootPath="${4}"              # The root directory for the system. Example: /
+
+###
 ### MAIN SCRIPT
 ###
 
