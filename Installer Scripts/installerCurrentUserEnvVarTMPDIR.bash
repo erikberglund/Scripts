@@ -25,7 +25,7 @@ rootPath="${4}"              # The root directory for the system. Example: /
 ### MAIN SCRIPT
 ###
 
-# List all processe for ${USER}, grep for Installer and set installerPID to last match.
+# List all processes for ${USER}, use regex to find Installer and set installerPID to it's PID (last match).
 installerPID=$( ps -u${USER} -c -o user,pid,command | sed -nE 's/^'"${USER}"'.* ([0-9]+) Installer$/\1/p' | tail -1 )
 if [[ -n ${installerPID} ]]; then
 	
