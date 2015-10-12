@@ -13,7 +13,13 @@
 # This script is designed to be run from an installer package as a preinstall or a postinstall script.
 # This script creates a user in the target volume's user database from settings configured in this script.
 
-# Modify the variables below to match your user, then include this script as a postinstall script in a payload free package.
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### USAGE
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Modify the variables below to match your desired user, then include this script as a postinstall script in a payload free package.
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
