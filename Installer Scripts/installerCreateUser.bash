@@ -2,6 +2,7 @@
 
 ### Version 1.0.2
 ### Created by Erik Berglund
+### https://github.com/erikberglund
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
@@ -19,8 +20,9 @@
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
 # User short name may only contain the following characters: a-z, A-Z, _ (underscore), - (hyphen), . (period)
+# It can max be 31 characters long.
 # More info here on page 66-67: https://manuals.info.apple.com/MANUALS/1000/MA1181/en_US/UserMgmt_v10.6.pdf
-userShortName="shortname"
+userShortName="firstnamelastname"
 
 # User full name.
 userRealName="Firstname Lastname"
@@ -43,6 +45,14 @@ userPicture="/Library/User Pictures/Fun/Ying-Yang.png"
 # If 'userIsHidden' is set to 'yes', this will be overridden to "/var/${userShortName}".
 # Don't add ${3} before user path, this will be read by the target system when booted.
 userHomeDirectory="/Users/${userShortName}"
+
+# Creates the new user's home directory from the user template.
+createHomeDirectory="yes"
+
+# Only used if 'createHomeDirectory' is set to 'yes'.
+# Use any of the localized home folder names in '/System/Library/User Template' in this variable. Example: "sv" (Swedish)
+# If chosen localization doesn't exist or this is left empty, 'English' will be used.
+userHomeDirectoryLocalization=""
 
 # Set uid of user.
 # If this is left empty, the script will use the first available uid between 501-600
@@ -90,6 +100,8 @@ PATH="${targetVolumePath}/usr/bin":"${targetVolumePath}/bin":"${targetVolumePath
 
 # Get path to commands to be used in the script.
 cmd_awk=$( which awk )
+cmd_chown=$( which chown )
+cmd_ditto=$( which ditto )
 cmd_dscl=$( which dscl )
 cmd_sed=$( which sed )
 cmd_PlistBuddy="${targetVolumePath}/usr/libexec/PlistBuddy"
@@ -115,7 +127,7 @@ if [[ ${userIsAdmin} == yes ]]; then
 	if [[ -z ${userGroups} ]]; then
 		userGroups="admin"
 	else
-		userGroups="admin;${userGroups}"
+		userGroups="admin;_appserveradm;_appserverusr;${userGroups}"
 	fi
 	
 	if [[ ${userIsHidden} == yes ]]; then
@@ -148,7 +160,7 @@ if [[ -z ${userUID} ]] || [[ ${userIsHidden} == yes ]]; then
 	if [[ -n ${startingUID} ]] && [[ -n ${endingUID} ]]; then
 		printf "%s\n" "Searching for first available uid between ${startingUID}-${endingUID} in target volume database..."
 		for (( availableUID=${startingUID}; availableUID<${endingUID}; availableUID++)); do
-			dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -search /Local/Default/Users UniqueID ${availableUID} )
+			dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -search /Local/Default/Users UniqueID ${availableUID} 2>&1 )
 			if [[ -z ${dscl_output} ]]; then
 				userUID="${availableUID}"
 				printf "%s\n" "First available uid is ${userUID}"
@@ -158,8 +170,19 @@ if [[ -z ${userUID} ]] || [[ ${userIsHidden} == yes ]]; then
 	fi
 fi
 
+if [[ ${createHomeDirectory} == yes ]]; then
+	if [[ -d /System/Library/User Template/${userHomeDirectoryLocalization}.lproj ]]; then
+		path_localizedHomeDirectoryTemplate="/System/Library/User Template/${userHomeDirectoryLocalization}.lproj/"
+	elif [[ -d /System/Library/User Template/${userHomeDirectoryLocalization} ]]; then
+		path_localizedHomeDirectoryTemplate="/System/Library/User Template/${userHomeDirectoryLocalization}/"
+	else
+		path_localizedHomeDirectoryTemplate="/System/Library/User Template/English.lproj/"
+	fi
+fi
+
 # Database path to the user to be created.
 targetVolumeDatabasePath="/Local/Default/Users/${userShortName}"
+targetVolumeNodePath="${targetVolumePath}/var/db/dslocal/nodes/Default"
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
@@ -169,7 +192,7 @@ targetVolumeDatabasePath="/Local/Default/Users/${userShortName}"
 
 # Create user record
 printf "%s\n" "Creating user record in target volume database: ${targetVolumeDatabasePath}"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -create "${targetVolumeDatabasePath}" 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -create "${targetVolumeDatabasePath}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Unable to create user record in target user database"
@@ -180,7 +203,7 @@ fi
 
 # Add RealName
 printf "%s\n" "Adding user RealName: ${userRealName}"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" RealName "${userRealName}" 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${targetVolumeDatabasePath}" RealName "${userRealName}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Failed to set RealName"
@@ -191,7 +214,7 @@ fi
 
 # Add UniqueID
 printf "%s\n" "Adding user UniqueID: ${userUID}"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" UniqueID ${userUID} 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${targetVolumeDatabasePath}" UniqueID ${userUID} 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Failed to set UniqueID"
@@ -202,7 +225,7 @@ fi
 
 # Add PrimaryGroup
 printf "%s\n" "Adding user PrimaryGroupID: ${userPrimaryGroupID}"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" PrimaryGroupID ${userPrimaryGroupID} 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${targetVolumeDatabasePath}" PrimaryGroupID ${userPrimaryGroupID} 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Failed to set PrimaryGroup"
@@ -213,7 +236,7 @@ fi
 
 # Add NFSHomeDirectory
 printf "%s\n" "Adding user NFSHomeDirectory: ${userHomeDirectory}"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" NFSHomeDirectory "${userHomeDirectory}" 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${targetVolumeDatabasePath}" NFSHomeDirectory "${userHomeDirectory}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Failed to set NFSHomeDirectory"
@@ -224,7 +247,7 @@ fi
 
 # Add UserShell
 printf "%s\n" "Adding user UserShell: /bin/bash"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" UserShell '/bin/bash' 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${targetVolumeDatabasePath}" UserShell '/bin/bash' 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Failed to set UserShell"
@@ -235,7 +258,7 @@ fi
 
 # Add UserPicture
 printf "%s\n" "Adding user UserPicture: ${userPicture}"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" Picture "${userPicture}" 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${targetVolumeDatabasePath}" Picture "${userPicture}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Failed to set UserShell"
@@ -246,7 +269,7 @@ fi
 
 # Add Password
 printf "%s\n" "Adding user Password: *******"
-dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -passwd "${targetVolumeDatabasePath}" "${userPassword}" 2>&1 )
+dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -passwd "${targetVolumeDatabasePath}" "${userPassword}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
 	printf "%s\n" "Failed to set Password"
@@ -261,11 +284,11 @@ if [[ -n ${userGroups} ]]; then
 	for i in "${groupArray[@]}"; do
 		groupName="${groupArray[i]}"
 		groupFileName="${groupName}.plist"
-		groupFilePath="${targetVolumePath}/var/db/dslocal/nodes/Default/groups/${groupFileName}"
+		groupFilePath="${targetVolumeNodePath}/groups/${groupFileName}"
 		groupDatabasePath="/Local/Default/Groups/${groupName}"
 
 		if [[ -f ${groupFilePath} ]]; then
-			dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${groupDatabasePath}" GroupMembership "${userShortName}" 2>&1 )
+			dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${groupDatabasePath}" GroupMembership "${userShortName}" 2>&1 )
 			dscl_exit_status=${?}
 			if [[ ${dscl_exit_status} -ne 0 ]]; then
 				printf "%s\n" "Failed to add user to group: ${groupName}"
@@ -286,7 +309,7 @@ if [[ ${userIsHidden} == yes ]]; then
 	
 	# If target is 10.10 or higher, set 'IsHidden' in user record to YES
 	if (( 10 <= targetVolumeOsMinorVersion )); then
-		dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -append "${targetVolumeDatabasePath}" IsHidden 1 )
+		dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${targetVolumeDatabasePath}" IsHidden 1 2>&1 )
 		dscl_exit_status=${?}
 		if [[ ${dscl_exit_status} -ne 0 ]]; then
 			printf "%s\n" "Failed to set hidden flag on user: ${userShortName}"
@@ -317,9 +340,38 @@ if [[ ${userIsHidden} == yes ]]; then
 	fi
 fi
 
+# Create user home folder
+if [[ ${createHomeDirectory} == yes ]]; then
+	printf "%s\n" "Creating user home folder..."
+	ditto_output=$( "${cmd_ditto}" "${path_localizedHomeDirectoryTemplate}" "${targetVolumePath}/Users/${userShortName}" 2>&1 )
+	ditto_exit_status=${?}
+	
+	if [[ ${ditto_exit_status} -ne 0 ]]; then
+		printf "%s\n" "Failed to copy (ditto) user home folder template to: ${targetVolumePath}/Users/${userShortName}"
+		printf "%s\n" "ditto_exit_status=${ditto_exit_status}"
+		printf "%s\n" "ditto_output=${ditto_output}"
+		exit ${ditto_exit_status}
+	fi
+	
+	printf "%s\n" "Setting correct permissions on user home folder..."
+	chown_output=$( "${cmd_chown}" -R ${userUID}:${userPrimaryGroupID} "${targetVolumePath}/Users/${userShortName}" 2>&1 )
+	chown_exit_status=${?}
+	
+	if [[ ${chown_exit_status} -ne 0 ]]; then
+		printf "%s\n" "Failed to copy (ditto) user home folder template to: ${targetVolumePath}/Users/${userShortName}"
+		printf "%s\n" "chown_exit_status=${chown_exit_status}"
+		printf "%s\n" "chown_output=${chown_output}"
+		exit ${chown_exit_status}
+	fi
+fi
+
 # Add autoLoginUser setting
 if [[ ${userAutoLogin} == yes ]]; then
 	printf "%s\n" "Setting user: ${userShortName} to log in automatically"
+	
+	"${cmd_plistBuddy}" -c "Delete :autoLoginUser" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" > /dev/null 2>&1
+	"${cmd_plistBuddy}" -c "Delete :autoLoginUserUID" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" > /dev/null 2>&1
+	
 	plistBuddy_output=$( "${cmd_plistBuddy}" -c "Add :autoLoginUser string ${userShortName}" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 2>&1 )
 	plistBuddy_exit_status=${?}
 	if [[ ${plistBuddy_exit_status} -ne 0 ]]; then
