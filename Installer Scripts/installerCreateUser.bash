@@ -13,14 +13,16 @@
 # This script is designed to be run from an installer package as a preinstall or a postinstall script.
 # This script creates a user in the target volume's user database from settings configured in this script.
 
+# Modify the variables below to match your user, then include this script as a postinstall script in a payload free package.
+
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
 ### CHANGE THESE VARIABLES TO CUSTOMIZE USER
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
-# User short name may only contain the following characters: a-z, A-Z, _ (underscore), - (hyphen), . (period)
-# It can max be 31 characters long.
+# User short name may only contain the following characters: a-z, A-Z, 0-9, _ (underscore), - (hyphen), . (period)
+# It may only be 31 characters long and has to start with an alpha numeric character.
 # More info here on page 66-67: https://manuals.info.apple.com/MANUALS/1000/MA1181/en_US/UserMgmt_v10.6.pdf
 userShortName="firstnamelastname"
 
@@ -52,7 +54,7 @@ createHomeDirectory="yes"
 # Only used if 'createHomeDirectory' is set to 'yes'.
 # Use any of the localized home folder names in '/System/Library/User Template' in this variable. Example: "sv" (Swedish)
 # If chosen localization doesn't exist or this is left empty, 'English' will be used.
-userHomeDirectoryLocalization=""
+userHomeDirectoryLocalization="English"
 
 # Set uid of user.
 # If this is left empty, the script will use the first available uid between 501-600
@@ -112,12 +114,21 @@ if [[ -f ${targetVolumePath}/System/Library/CoreServices/SystemVersion.plist ]];
 	targetVolumeOsMinorVersion=$( "${cmd_PlistBuddy}" -c "Print ProductUserVisibleVersion" "${targetVolumePath}/System/Library/CoreServices/SystemVersion.plist" | "${cmd_awk}" -F. '{ print $2 }' 2>&1  )
 fi
 
-# Check that userShortName doesn't contain invalid characters.
-if ! [[ ${userShortName} =~ ^[-_.a-zA-Z]+$ ]]; then
-	printf "%s\n" "User short name contains invalid characters!"
-	printf "%s\n" "userShortName=${userShortName}"
+# Check that userShortName isn't too long and doesn't contain invalid characters.
+if ! [[ ${userShortName} =~ ^[_a-zA-Z][-_.a-zA-Z0-9]{0,30}$ ]]; then
+	printf "%s\n" "[ERROR] userShortName=${userShortName}"
+	if (( ${#userShortName} > 31 )); then
+		printf "%s\n" "[ERROR] User short name is longer than 31 characters!"
+	fi
+	userShortNameInvalidCharacters=$( "${cmd_sed}" -E 's/[-_.a-zA-Z0-9]//g' <<< "${userShortName}" )
+	if (( ${#userShortNameInvalidCharacters} > 0 )); then
+		printf "%s\n" "[ERROR] User short name contains invalid characters: ${userShortNameInvalidCharacters}"
+	fi
+	if ! [[ ${userShortName:0:1} =~ [_a-zA-Z] ]]; then
+		printf "%s\n" "[ERROR] User short name doesn't begin with an alpha numeric character: ${userShortName:0:1}"
+	fi
 	exit 1
-fi
+else
 
 # Clean variable userGroups by removing all spaces and leading and trailing semicolons (;)
 userGroups=$( "${cmd_sed}" -E 's/(^;|;$|[[:space:]]+)//g' <<< "${userGroups}" )
@@ -143,8 +154,8 @@ fi
 # If the selected path for user picture doesn't exist on target volume, add a default picture instead.
 if [[ ! -f ${targetVolumePath}/${userPicture} ]]; then
 	defaultUserPicture="/Library/User Pictures/Fun/Ying-Yang.png"
-	printf "%s\n" "Selected user picture doesn't exist on target volume!"
-	printf "%s\n" "userPicture=${userPicture}"
+	printf "%s\n" "[ERROR] Selected user picture doesn't exist on target volume!"
+	printf "%s\n" "[ERROR] userPicture=${userPicture}"
 	printf "%s\n" "Will use the default user picture instead: ${defaultUserPicture}"
 	userPicture="${defaultUserPicture}"
 fi
@@ -195,9 +206,9 @@ printf "%s\n" "Creating user record in target volume database: ${targetVolumeDat
 dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -create "${targetVolumeDatabasePath}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
-	printf "%s\n" "Unable to create user record in target user database"
-	printf "%s\n" "dscl_exit_status=${dscl_exit_status}"
-	printf "%s\n" "dscl_output=${dscl_output}"
+	printf "%s\n" "[ERROR] Unable to create user record in target user database"
+	printf "%s\n" "[ERROR] dscl_exit_status=${dscl_exit_status}"
+	printf "%s\n" "[ERROR] dscl_output=${dscl_output}"
 	exit ${dscl_exit_status}
 fi
 
@@ -206,9 +217,9 @@ printf "%s\n" "Adding user RealName: ${userRealName}"
 dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${targetVolumeDatabasePath}" RealName "${userRealName}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
-	printf "%s\n" "Failed to set RealName"
-	printf "%s\n" "dscl_exit_status=${dscl_exit_status}"
-	printf "%s\n" "dscl_output=${dscl_output}"
+	printf "%s\n" "[ERROR] Failed to set RealName"
+	printf "%s\n" "[ERROR] dscl_exit_status=${dscl_exit_status}"
+	printf "%s\n" "[ERROR] dscl_output=${dscl_output}"
 	exit ${dscl_exit_status}
 fi
 
@@ -217,9 +228,9 @@ printf "%s\n" "Adding user UniqueID: ${userUID}"
 dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${targetVolumeDatabasePath}" UniqueID ${userUID} 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
-	printf "%s\n" "Failed to set UniqueID"
-	printf "%s\n" "dscl_exit_status=${dscl_exit_status}"
-	printf "%s\n" "dscl_output=${dscl_output}"
+	printf "%s\n" "[ERROR] Failed to set UniqueID"
+	printf "%s\n" "[ERROR] dscl_exit_status=${dscl_exit_status}"
+	printf "%s\n" "[ERROR] dscl_output=${dscl_output}"
 	exit ${dscl_exit_status}
 fi
 
@@ -228,9 +239,9 @@ printf "%s\n" "Adding user PrimaryGroupID: ${userPrimaryGroupID}"
 dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${targetVolumeDatabasePath}" PrimaryGroupID ${userPrimaryGroupID} 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
-	printf "%s\n" "Failed to set PrimaryGroup"
-	printf "%s\n" "dscl_exit_status=${dscl_exit_status}"
-	printf "%s\n" "dscl_output=${dscl_output}"
+	printf "%s\n" "[ERROR] Failed to set PrimaryGroup"
+	printf "%s\n" "[ERROR] dscl_exit_status=${dscl_exit_status}"
+	printf "%s\n" "[ERROR] dscl_output=${dscl_output}"
 	exit ${dscl_exit_status}
 fi
 
@@ -239,9 +250,9 @@ printf "%s\n" "Adding user NFSHomeDirectory: ${userHomeDirectory}"
 dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${targetVolumeDatabasePath}" NFSHomeDirectory "${userHomeDirectory}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
-	printf "%s\n" "Failed to set NFSHomeDirectory"
-	printf "%s\n" "dscl_exit_status=${dscl_exit_status}"
-	printf "%s\n" "dscl_output=${dscl_output}"
+	printf "%s\n" "[ERROR] Failed to set NFSHomeDirectory"
+	printf "%s\n" "[ERROR] dscl_exit_status=${dscl_exit_status}"
+	printf "%s\n" "[ERROR] dscl_output=${dscl_output}"
 	exit ${dscl_exit_status}
 fi
 
@@ -250,9 +261,9 @@ printf "%s\n" "Adding user UserShell: /bin/bash"
 dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${targetVolumeDatabasePath}" UserShell '/bin/bash' 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
-	printf "%s\n" "Failed to set UserShell"
-	printf "%s\n" "dscl_exit_status=${dscl_exit_status}"
-	printf "%s\n" "dscl_output=${dscl_output}"
+	printf "%s\n" "[ERROR] Failed to set UserShell"
+	printf "%s\n" "[ERROR] dscl_exit_status=${dscl_exit_status}"
+	printf "%s\n" "[ERROR] dscl_output=${dscl_output}"
 	exit ${dscl_exit_status}
 fi
 
@@ -261,9 +272,9 @@ printf "%s\n" "Adding user UserPicture: ${userPicture}"
 dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${targetVolumeDatabasePath}" Picture "${userPicture}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
-	printf "%s\n" "Failed to set UserShell"
-	printf "%s\n" "dscl_exit_status=${dscl_exit_status}"
-	printf "%s\n" "dscl_output=${dscl_output}"
+	printf "%s\n" "[ERROR] Failed to set UserShell"
+	printf "%s\n" "[ERROR] dscl_exit_status=${dscl_exit_status}"
+	printf "%s\n" "[ERROR] dscl_output=${dscl_output}"
 	exit ${dscl_exit_status}
 fi
 
@@ -272,9 +283,9 @@ printf "%s\n" "Adding user Password: *******"
 dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -passwd "${targetVolumeDatabasePath}" "${userPassword}" 2>&1 )
 dscl_exit_status=${?}
 if [[ ${dscl_exit_status} -ne 0 ]]; then
-	printf "%s\n" "Failed to set Password"
-	printf "%s\n" "dscl_exit_status=${dscl_exit_status}"
-	printf "%s\n" "dscl_output=${dscl_output}"
+	printf "%s\n" "[ERROR] Failed to set Password"
+	printf "%s\n" "[ERROR] dscl_exit_status=${dscl_exit_status}"
+	printf "%s\n" "[ERROR] dscl_output=${dscl_output}"
 	exit ${dscl_exit_status}
 fi
 
@@ -291,9 +302,9 @@ if [[ -n ${userGroups} ]]; then
 			dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${groupDatabasePath}" GroupMembership "${userShortName}" 2>&1 )
 			dscl_exit_status=${?}
 			if [[ ${dscl_exit_status} -ne 0 ]]; then
-				printf "%s\n" "Failed to add user to group: ${groupName}"
-				printf "%s\n" "dscl_exit_status=${dscl_exit_status}"
-				printf "%s\n" "dscl_output=${dscl_output}"
+				printf "%s\n" "[ERROR] Failed to add user to group: ${groupName}"
+				printf "%s\n" "[ERROR] dscl_exit_status=${dscl_exit_status}"
+				printf "%s\n" "[ERROR] dscl_output=${dscl_output}"
 				exit ${dscl_exit_status}
 			fi
 		else
@@ -312,9 +323,9 @@ if [[ ${userIsHidden} == yes ]]; then
 		dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -append "${targetVolumeDatabasePath}" IsHidden 1 2>&1 )
 		dscl_exit_status=${?}
 		if [[ ${dscl_exit_status} -ne 0 ]]; then
-			printf "%s\n" "Failed to set hidden flag on user: ${userShortName}"
-			printf "%s\n" "dscl_exit_status=${dscl_exit_status}"
-			printf "%s\n" "dscl_output=${dscl_output}"
+			printf "%s\n" "[ERROR] Failed to set hidden flag on user: ${userShortName}"
+			printf "%s\n" "[ERROR] dscl_exit_status=${dscl_exit_status}"
+			printf "%s\n" "[ERROR] dscl_output=${dscl_output}"
 			exit ${dscl_exit_status}
 		fi
 		
@@ -323,18 +334,18 @@ if [[ ${userIsHidden} == yes ]]; then
 		plistBuddy_output=$( "${cmd_plistBuddy}" -c "Add :HiddenUsersList array" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 2>&1 )
 		plistBuddy_exit_status=${?}
 		if [[ ${plistBuddy_exit_status} -ne 0 ]]; then
-			printf "%s\n" "Failed to create array in plist: ${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist"
-			printf "%s\n" "plistBuddy_exit_status=${plistBuddy_exit_status}"
-			printf "%s\n" "plistBuddy_output=${plistBuddy_output}"
+			printf "%s\n" "[ERROR] Failed to create array in plist: ${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist"
+			printf "%s\n" "[ERROR] plistBuddy_exit_status=${plistBuddy_exit_status}"
+			printf "%s\n" "[ERROR] plistBuddy_output=${plistBuddy_output}"
 			exit ${plistBuddy_exit_status}
 		fi
 		
 		plistBuddy_output=$( "${cmd_plistBuddy}" -c "Add :HiddenUsersList:0 string ${userShortName}" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 2>&1 )
 		plistBuddy_exit_status=${?}
 		if [[ ${plistBuddy_exit_status} -ne 0 ]]; then
-			printf "%s\n" "Failed to add user to HiddenUsersList array in plist: ${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist"
-			printf "%s\n" "plistBuddy_exit_status=${plistBuddy_exit_status}"
-			printf "%s\n" "plistBuddy_output=${plistBuddy_output}"
+			printf "%s\n" "[ERROR] Failed to add user to HiddenUsersList array in plist: ${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist"
+			printf "%s\n" "[ERROR] plistBuddy_exit_status=${plistBuddy_exit_status}"
+			printf "%s\n" "[ERROR] plistBuddy_output=${plistBuddy_output}"
 			exit ${plistBuddy_exit_status}
 		fi
 	fi
@@ -347,9 +358,9 @@ if [[ ${createHomeDirectory} == yes ]]; then
 	ditto_exit_status=${?}
 	
 	if [[ ${ditto_exit_status} -ne 0 ]]; then
-		printf "%s\n" "Failed to copy (ditto) user home folder template to: ${targetVolumePath}/Users/${userShortName}"
-		printf "%s\n" "ditto_exit_status=${ditto_exit_status}"
-		printf "%s\n" "ditto_output=${ditto_output}"
+		printf "%s\n" "[ERROR] Failed to copy (ditto) user home folder template to: ${targetVolumePath}/Users/${userShortName}"
+		printf "%s\n" "[ERROR] ditto_exit_status=${ditto_exit_status}"
+		printf "%s\n" "[ERROR] ditto_output=${ditto_output}"
 		exit ${ditto_exit_status}
 	fi
 	
@@ -358,9 +369,9 @@ if [[ ${createHomeDirectory} == yes ]]; then
 	chown_exit_status=${?}
 	
 	if [[ ${chown_exit_status} -ne 0 ]]; then
-		printf "%s\n" "Failed to copy (ditto) user home folder template to: ${targetVolumePath}/Users/${userShortName}"
-		printf "%s\n" "chown_exit_status=${chown_exit_status}"
-		printf "%s\n" "chown_output=${chown_output}"
+		printf "%s\n" "[ERROR] Failed to copy (ditto) user home folder template to: ${targetVolumePath}/Users/${userShortName}"
+		printf "%s\n" "[ERROR] chown_exit_status=${chown_exit_status}"
+		printf "%s\n" "[ERROR] chown_output=${chown_output}"
 		exit ${chown_exit_status}
 	fi
 fi
@@ -375,9 +386,9 @@ if [[ ${userAutoLogin} == yes ]]; then
 	plistBuddy_output=$( "${cmd_plistBuddy}" -c "Add :autoLoginUser string ${userShortName}" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 2>&1 )
 	plistBuddy_exit_status=${?}
 	if [[ ${plistBuddy_exit_status} -ne 0 ]]; then
-		printf "%s\n" "Failed to set auto login for user: ${userShortName}"
-		printf "%s\n" "plistBuddy_exit_status=${plistBuddy_exit_status}"
-		printf "%s\n" "plistBuddy_output=${plistBuddy_output}"
+		printf "%s\n" "[ERROR] Failed to set auto login for user: ${userShortName}"
+		printf "%s\n" "[ERROR] plistBuddy_exit_status=${plistBuddy_exit_status}"
+		printf "%s\n" "[ERROR] plistBuddy_output=${plistBuddy_output}"
 		exit ${plistBuddy_exit_status}
 	fi
 	
@@ -405,8 +416,7 @@ if [[ ${userAutoLogin} == yes ]]; then
 		echo -n "${userPasswordEncoded}" > "${targetVolumePath}/etc/kcpassword"
 		"${cmd_chmod}" 0600 "${targetVolumePath}/etc/kcpassword"
 	else
-		printf "%s\n"
-		printf "%s\n" "Encoded password for auto login was empty!"	
+		printf "%s\n" "[ERROR] Encoded password for auto login was empty!"	
 		exit 1
 	fi
 fi
