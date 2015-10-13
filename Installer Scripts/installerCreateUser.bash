@@ -357,7 +357,7 @@ if [[ ${userIsHidden} == yes ]]; then
 			exit ${plistBuddy_exit_status}
 		fi
 		
-		plistBuddy_output=$( "${cmd_plistBuddy}" -c "Add :HiddenUsersList:0 string ${userShortName}" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 2>&1 )
+		plistBuddy_output=$( "${cmd_plistBuddy}" -c "Add :HiddenUsersList: string ${userShortName}" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 2>&1 )
 		plistBuddy_exit_status=${?}
 		if [[ ${plistBuddy_exit_status} -ne 0 ]]; then
 			printf "%s\n" "[ERROR] Failed to add user to HiddenUsersList array in plist: ${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist"
