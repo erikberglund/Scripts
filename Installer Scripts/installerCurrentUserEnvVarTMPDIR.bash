@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### Version 1.0
+### Version 1.1
 ### Created by Erik Berglund
 ### https://github.com/erikberglund
 
@@ -11,7 +11,7 @@
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
 # This script is designed to be run from an installer package as a preinstall or a postinstall script.
-# It will get the value of the current users's variable TMPDIR that is not passed as in the env to the script. 
+# It will get the value of the current users's variable TMPDIR that is not passed in the env to the script. 
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
@@ -37,7 +37,7 @@ rootPath="${4}"              # The root directory for the system. Example: /
 path_tmpDir=$( getconf DARWIN_USER_TEMP_DIR )
 printf "%s\n" "TMPDIR=${path_tmpDir}"
 
-# My long way to selve the problem, don't use this.
+# My long way to solve the problem, don't use this.
 # List all processes for ${USER}, use regex to find Installer and set installerPID to it's PID (last match).
 #installerPID=$( ps -u${USER} -c -o user,pid,command | sed -nE 's/^'"${USER}"'.* ([0-9]+) Installer$/\1/p' | tail -1 )
 #if [[ -n ${installerPID} ]]; then

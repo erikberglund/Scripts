@@ -47,7 +47,7 @@ userIsAdmin="yes"
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
-# Path to a picture on target machine, if it doesn't exist at script runtime it will be replaced by a default picture.
+# Path to a picture on target volume, if it doesn't exist at script runtime it will be replaced by a default picture.
 userPicture="/Library/User Pictures/Fun/Ying-Yang.png"
 
 # If 'userIsHidden' is set to 'yes', this will be overridden to "/var/${userShortName}".
@@ -58,7 +58,7 @@ userHomeDirectory="/Users/${userShortName}"
 createHomeDirectory="yes"
 
 # Only used if 'createHomeDirectory' is set to 'yes'.
-# Use any of the localized home folder names in '/System/Library/User Template' in this variable. Example: "sv" (Swedish)
+# Set to any of the localized home folder names in '/System/Library/User Template' in this variable. Example: "sv" (Swedish)
 # If chosen localization doesn't exist or this is left empty, 'English' will be used.
 userHomeDirectoryLocalization="English"
 
@@ -74,7 +74,7 @@ userPrimaryGroupID="20"
 # Don't add group 'admin' here, use "userIsAdmin" setting instead.
 userGroups=""
 
-# Currently this option is only respected if user is set to be admin.
+# Only used if 'userIsAdmin' is set to 'yes'.
 userIsHidden="no"
 
 # Create the auto login kcpassword-file and add user to key 'autoLoginUser' in /L/P/com.apple.loginwindow-plist
@@ -86,16 +86,18 @@ userAutoLogin="yes"
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
-# Set up all variables passed by installer
+# Setup all variables passed by installer
 # More info here on page 50: https://developer.apple.com/legacy/library/documentation/DeveloperTools/Conceptual/SoftwareDistribution4/SoftwareDistribution4.pdf
 installerPackagePath="${1}"  # Full path to the installation package the Installer application is processing.
 destinationPath="${2}"       # Full path to the installation destination. Example: /Applications
 targetVolumePath="${3}"      # Installation volume (or mountpoint) to receive the payload
 rootPath="${4}"              # The root directory for the system. Example: /
 
+#//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
 ### MAIN SCRIPT
 ###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
 
 # Check that we get a valid volume path as targetVolumePath, else exit.
 if [[ -z ${targetVolumePath} ]] || ! [[ -d ${targetVolumePath} ]]; then
@@ -120,14 +122,14 @@ if [[ -f ${targetVolumePath}/System/Library/CoreServices/SystemVersion.plist ]];
 	targetVolumeOsMinorVersion=$( "${cmd_PlistBuddy}" -c "Print ProductUserVisibleVersion" "${targetVolumePath}/System/Library/CoreServices/SystemVersion.plist" | "${cmd_awk}" -F. '{ print $2 }' 2>&1  )
 fi
 
-# Check that userShortName isn't too long and doesn't contain invalid characters.
+# Check that 'userShortName' isn't too long and doesn't contain invalid characters.
 if ! [[ ${userShortName} =~ ^[_a-zA-Z][-_.a-zA-Z0-9]{0,30}$ ]]; then
 	printf "%s\n" "[ERROR] userShortName=${userShortName}"
-	if (( ${#userShortName} > 31 )); then
+	if (( 31 < ${#userShortName} )); then
 		printf "%s\n" "[ERROR] User short name is longer than 31 characters!"
 	fi
 	userShortNameInvalidCharacters=$( "${cmd_sed}" -E 's/[-_.a-zA-Z0-9]//g' <<< "${userShortName}" )
-	if (( ${#userShortNameInvalidCharacters} > 0 )); then
+	if (( 0 < ${#userShortNameInvalidCharacters} )); then
 		printf "%s\n" "[ERROR] User short name contains invalid characters: ${userShortNameInvalidCharacters}"
 	fi
 	if ! [[ ${userShortName:0:1} =~ [_a-zA-Z] ]]; then
@@ -136,20 +138,21 @@ if ! [[ ${userShortName} =~ ^[_a-zA-Z][-_.a-zA-Z0-9]{0,30}$ ]]; then
 	exit 1
 else
 
-# Clean variable userGroups by removing all spaces and leading and trailing semicolons (;)
+# Clean variable 'userGroups' by removing all spaces and leading and trailing semicolons (;).
 userGroups=$( "${cmd_sed}" -E 's/(^;|;$|[[:space:]]+)//g' <<< "${userGroups}" )
 
-# If userIsAdmin is set to 'yes', add it to the group admin and set it's home directory in /var
+# If 'userIsAdmin' is set to 'yes', add it to the admin groups.
 if [[ ${userIsAdmin} == yes ]]; then
 	if [[ -z ${userGroups} ]]; then
 		userGroups="admin"
 	else
 		userGroups="admin;_appserveradm;_appserverusr;${userGroups}"
 	fi
-	
-	if [[ ${userIsHidden} == yes ]]; then
-		userHomeDirectory="/var/${userShortName}"
-	fi
+fi
+
+# If 'userIsHidden' is set to 'yes', override 'userHomeDirectory' to set the user home folder in /var
+if [[ ${userIsHidden} == yes ]]; then
+	userHomeDirectory="/var/${userShortName}"
 fi
 
 # If no home directory was defined, use the default user home directory path.
@@ -166,6 +169,12 @@ if [[ ! -f ${targetVolumePath}/${userPicture} ]]; then
 	userPicture="${defaultUserPicture}"
 fi
 
+# Database path for dscl to the user to be created.
+targetVolumeDatabasePath="/Local/Default/Users/${userShortName}"
+
+# Database path on target volume.
+targetVolumeNodePath="${targetVolumePath}/var/db/dslocal/nodes/Default"
+
 # If 'userUID' is empty, find first available uid in target volume database
 if [[ -z ${userUID} ]] || [[ ${userIsHidden} == yes ]]; then
 	if [[ ${userIsHidden} == yes ]] && (( targetVolumeOsMinorVersion <= 9 )); then
@@ -177,7 +186,7 @@ if [[ -z ${userUID} ]] || [[ ${userIsHidden} == yes ]]; then
 	if [[ -n ${startingUID} ]] && [[ -n ${endingUID} ]]; then
 		printf "%s\n" "Searching for first available uid between ${startingUID}-${endingUID} in target volume database..."
 		for (( availableUID=${startingUID}; availableUID<${endingUID}; availableUID++)); do
-			dscl_output=$( "${cmd_dscl}" -f "${targetVolumePath}/var/db/dslocal/nodes/Default" localonly -search /Local/Default/Users UniqueID ${availableUID} 2>&1 )
+			dscl_output=$( "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -search /Local/Default/Users UniqueID ${availableUID} 2>&1 )
 			if [[ -z ${dscl_output} ]]; then
 				userUID="${availableUID}"
 				printf "%s\n" "First available uid is ${userUID}"
@@ -187,6 +196,7 @@ if [[ -z ${userUID} ]] || [[ ${userIsHidden} == yes ]]; then
 	fi
 fi
 
+# If 'createHomeDirectory' is set to 'yes', set the available localized user template to 'path_localizedHomeDirectoryTemplate'.
 if [[ ${createHomeDirectory} == yes ]]; then
 	if [[ -d /System/Library/User Template/${userHomeDirectoryLocalization}.lproj ]]; then
 		path_localizedHomeDirectoryTemplate="/System/Library/User Template/${userHomeDirectoryLocalization}.lproj/"
@@ -196,10 +206,6 @@ if [[ ${createHomeDirectory} == yes ]]; then
 		path_localizedHomeDirectoryTemplate="/System/Library/User Template/English.lproj/"
 	fi
 fi
-
-# Database path to the user to be created.
-targetVolumeDatabasePath="/Local/Default/Users/${userShortName}"
-targetVolumeNodePath="${targetVolumePath}/var/db/dslocal/nodes/Default"
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
@@ -337,6 +343,11 @@ if [[ ${userIsHidden} == yes ]]; then
 		
 		# If target is 10.9 or lower, add user to 'HiddenUsersList' in /L/P/com.apple.loginwindow.plist
 	elif (( targetVolumeOsMinorVersion <= 9 )); then
+		
+		#TO-DO - Add Hide500Users.
+		
+		#TO-DO - Read HiddenUsersList if more than one user should be hidden.
+		
 		plistBuddy_output=$( "${cmd_plistBuddy}" -c "Add :HiddenUsersList array" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 2>&1 )
 		plistBuddy_exit_status=${?}
 		if [[ ${plistBuddy_exit_status} -ne 0 ]]; then
