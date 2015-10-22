@@ -50,9 +50,10 @@ userIsAdmin="yes"
 # Path to a picture on target volume, if it doesn't exist at script runtime it will be replaced by a default picture.
 userPicture="/Library/User Pictures/Fun/Ying-Yang.png"
 
+# If this is left empty, the script will use the standard user path: "/Users/${userShortName}"
 # If 'userIsHidden' is set to 'yes', this will be overridden to "/var/${userShortName}".
 # Don't add ${3} before user path, this will be read by the target system when booted.
-userHomeDirectory="/Users/${userShortName}"
+userHomeDirectory=""
 
 # Creates the new user's home directory from the user template.
 createHomeDirectory="yes"
@@ -109,12 +110,12 @@ fi
 PATH="${targetVolumePath}/usr/bin":"${targetVolumePath}/bin":"${targetVolumePath}/usr/sbin":"${targetVolumePath}/sbin":"$PATH"
 
 # Get path to commands to be used in the script.
-cmd_awk=$( which awk )
-cmd_chown=$( which chown )
-cmd_ditto=$( which ditto )
-cmd_dscl=$( which dscl )
-cmd_sed=$( which sed )
-cmd_PlistBuddy="${targetVolumePath}/usr/libexec/PlistBuddy"
+#cmd_awk=$( which awk )
+#cmd_chown=$( which chown )
+#cmd_ditto=$( which ditto )
+#cmd_dscl=$( which dscl )
+#cmd_sed=$( which sed )
+#cmd_PlistBuddy="${targetVolumePath}/usr/libexec/PlistBuddy"
 
 # Get target volume os minor version.
 # Minor version is 9 in 10.9.5 for example.
