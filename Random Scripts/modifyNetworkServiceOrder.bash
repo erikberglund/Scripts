@@ -32,7 +32,7 @@ while read networkService; do
 	fi
 done < <( networksetup -listnetworkserviceorder | awk '/^\([0-9]/{$1 ="";gsub("^ ","");print}' )
 
-# Update newtork service order with prioritized services at the top.
+# Update network service order with prioritized services at the top.
 networksetup -ordernetworkservices "${prioritizedServices[@]}" "${otherServices[@]}"
 
 exit 0
