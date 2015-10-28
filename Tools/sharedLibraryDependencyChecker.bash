@@ -119,8 +119,12 @@ resolve_dependencies_for_target() {
 				resolve_dependencies_for_target "${dependency_library_path}"
 			fi
 		done < <( otool -L "${dependency_target}" | sed -nE "s/^[ $( printf '\t' )]+(.*)\(.*$/\1/p" 2>&1 )
+	elif [[ -d "${dependency_target}" ]] && ! array_contains_item external_dependencies "${dependency_target}"; then
+		
+		# Add dependency to external_dependencies array if it's not already added
+		add_item_to_array external_dependencies "${dependency_target}"
 	else
-		printf "%s\n" "[ERROR] No such file: ${dependency_target}" >&2
+		printf "%s\n" "[ERROR] No such file or directory: ${dependency_target}" >&2
 	fi
 }
 
