@@ -110,12 +110,12 @@ fi
 PATH="${targetVolumePath}/usr/bin":"${targetVolumePath}/bin":"${targetVolumePath}/usr/sbin":"${targetVolumePath}/sbin":"$PATH"
 
 # Get path to commands to be used in the script.
-#cmd_awk=$( which awk )
-#cmd_chown=$( which chown )
-#cmd_ditto=$( which ditto )
-#cmd_dscl=$( which dscl )
-#cmd_sed=$( which sed )
-#cmd_PlistBuddy="${targetVolumePath}/usr/libexec/PlistBuddy"
+cmd_awk=$( which awk )
+cmd_chown=$( which chown )
+cmd_ditto=$( which ditto )
+cmd_dscl=$( which dscl )
+cmd_sed=$( which sed )
+cmd_PlistBuddy="${targetVolumePath}/usr/libexec/PlistBuddy"
 
 # Get target volume os minor version.
 # Minor version is 9 in 10.9.5 for example.
@@ -129,15 +129,19 @@ if ! [[ ${userShortName} =~ ^[_a-zA-Z][-_.a-zA-Z0-9]{0,30}$ ]]; then
 	if (( 31 < ${#userShortName} )); then
 		printf "%s\n" "[ERROR] User short name is longer than 31 characters!"
 	fi
+	
 	userShortNameInvalidCharacters=$( "${cmd_sed}" -E 's/[-_.a-zA-Z0-9]//g' <<< "${userShortName}" )
+	
 	if (( 0 < ${#userShortNameInvalidCharacters} )); then
 		printf "%s\n" "[ERROR] User short name contains invalid characters: ${userShortNameInvalidCharacters}"
 	fi
+	
 	if ! [[ ${userShortName:0:1} =~ [_a-zA-Z] ]]; then
 		printf "%s\n" "[ERROR] User short name doesn't begin with an alpha numeric character: ${userShortName:0:1}"
 	fi
+	
 	exit 1
-else
+fi
 
 # Clean variable 'userGroups' by removing all spaces and leading and trailing semicolons (;).
 userGroups=$( "${cmd_sed}" -E 's/(^;|;$|[[:space:]]+)//g' <<< "${userGroups}" )
@@ -199,9 +203,9 @@ fi
 
 # If 'createHomeDirectory' is set to 'yes', set the available localized user template to 'path_localizedHomeDirectoryTemplate'.
 if [[ ${createHomeDirectory} == yes ]]; then
-	if [[ -d /System/Library/User Template/${userHomeDirectoryLocalization}.lproj ]]; then
+	if [[ -d "/System/Library/User Template/${userHomeDirectoryLocalization}.lproj" ]]; then
 		path_localizedHomeDirectoryTemplate="/System/Library/User Template/${userHomeDirectoryLocalization}.lproj/"
-	elif [[ -d /System/Library/User Template/${userHomeDirectoryLocalization} ]]; then
+	elif [[ -d "/System/Library/User Template/${userHomeDirectoryLocalization}" ]]; then
 		path_localizedHomeDirectoryTemplate="/System/Library/User Template/${userHomeDirectoryLocalization}/"
 	else
 		path_localizedHomeDirectoryTemplate="/System/Library/User Template/English.lproj/"
@@ -349,7 +353,7 @@ if [[ ${userIsHidden} == yes ]]; then
 		
 		#TO-DO - Read HiddenUsersList if more than one user should be hidden.
 		
-		plistBuddy_output=$( "${cmd_plistBuddy}" -c "Add :HiddenUsersList array" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 2>&1 )
+		plistBuddy_output=$( "${cmd_PlistBuddy}" -c "Add :HiddenUsersList array" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 2>&1 )
 		plistBuddy_exit_status=${?}
 		if [[ ${plistBuddy_exit_status} -ne 0 ]]; then
 			printf "%s\n" "[ERROR] Failed to create array in plist: ${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist"
@@ -358,7 +362,7 @@ if [[ ${userIsHidden} == yes ]]; then
 			exit ${plistBuddy_exit_status}
 		fi
 		
-		plistBuddy_output=$( "${cmd_plistBuddy}" -c "Add :HiddenUsersList: string ${userShortName}" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 2>&1 )
+		plistBuddy_output=$( "${cmd_PlistBuddy}" -c "Add :HiddenUsersList: string ${userShortName}" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 2>&1 )
 		plistBuddy_exit_status=${?}
 		if [[ ${plistBuddy_exit_status} -ne 0 ]]; then
 			printf "%s\n" "[ERROR] Failed to add user to HiddenUsersList array in plist: ${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist"
@@ -398,10 +402,10 @@ fi
 if [[ ${userAutoLogin} == yes ]]; then
 	printf "%s\n" "Setting user: ${userShortName} to log in automatically"
 	
-	"${cmd_plistBuddy}" -c "Delete :autoLoginUser" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" > /dev/null 2>&1
-	"${cmd_plistBuddy}" -c "Delete :autoLoginUserUID" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" > /dev/null 2>&1
+	"${cmd_PlistBuddy}" -c "Delete :autoLoginUser" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" > /dev/null 2>&1
+	"${cmd_PlistBuddy}" -c "Delete :autoLoginUserUID" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" > /dev/null 2>&1
 	
-	plistBuddy_output=$( "${cmd_plistBuddy}" -c "Add :autoLoginUser string ${userShortName}" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 2>&1 )
+	plistBuddy_output=$( "${cmd_PlistBuddy}" -c "Add :autoLoginUser string ${userShortName}" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 2>&1 )
 	plistBuddy_exit_status=${?}
 	if [[ ${plistBuddy_exit_status} -ne 0 ]]; then
 		printf "%s\n" "[ERROR] Failed to set auto login for user: ${userShortName}"
