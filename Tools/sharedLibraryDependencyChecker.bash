@@ -10,8 +10,7 @@
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
-# This script is designed to check all shared library dependencies the passed binary and all it's shared libraries requires.
-# Then it lists all dependencies that are missing on the passed system volume
+# This script is designed to recursively check all shared library dependencies for the passed binary.
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
