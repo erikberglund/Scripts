@@ -1,7 +1,7 @@
 # Scripts
 
 ## Installer Scripts
-These are scripts designed to be run fron an installer package.
+These are scripts designed to be run from an installer package.
 
 ## Random Scripts
 These are scripts that doens't fit any other category.
