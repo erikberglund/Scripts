@@ -92,7 +92,7 @@ readHelperFromApplicationBundleAtPath() {
 		local path_applicationBundle="${1}"
 	else
 		printError "Invalid application bundle path: ${1}"
-		exit 1;
+		exit 1
 	fi
 	
 	if [[ -d ${path_applicationBundle} ]]; then
@@ -109,6 +109,8 @@ readHelperFromApplicationBundleAtPath() {
 		
 		# Loop through every privileged helper tool defined in application bundle's Info.plist and remove it.
 		while read helperBinaryFilename; do
+			
+			printf "%s\n" "Resetting helper: ${helperBinaryFilename}..."
 			
 			# Currently assumes the helper launchd plist has the same name as the binary
 			helperLaunchdFilename="${helperBinaryFilename}.plist"
@@ -219,6 +221,8 @@ if [[ -n ${path_applicationBundle} ]]; then
 	# Read helper binary name(s) from application bundle Info.plist
 	readHelperFromApplicationBundleAtPath "${path_applicationBundle}"
 else
+	printf "%s\n" "Resetting helper: ${helperBinaryFilename}..."
+	
 	# Remove hardcoded helper launchd plist
 	removeHelperLaunchdPlistWithName "${helperLaunchdFilename}"
 
