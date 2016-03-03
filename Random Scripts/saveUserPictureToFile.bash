@@ -67,5 +67,5 @@ parse_command_line_options() {
 # Parse all passed command line options
 parse_command_line_options "${@}"
 
-# Parse all passed command line options
+# Write picture to file
 dscl . -read /Users/"${user}" JPEGPhoto | tail -1 | xxd -r -p > "${file}"
