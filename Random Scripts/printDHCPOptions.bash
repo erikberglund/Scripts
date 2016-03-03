@@ -56,7 +56,7 @@ parse_command_line_options() {
 		case ${opt} in
 			i) interface="${OPTARG}";;
 			n) names="true";;
-			\?)	print_usage; exit 1 ;;
+			\?) print_usage; exit 1 ;;
 			:) print_usage; exit 1 ;;
 		esac
 	done
@@ -105,7 +105,7 @@ name_for_option() {
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
-# Parse all passed options
+# Parse all passed command line options
 parse_command_line_options "${@}"
 
 for ((i=0; i<256; i++)); do
