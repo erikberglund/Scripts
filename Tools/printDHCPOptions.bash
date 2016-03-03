@@ -10,16 +10,32 @@
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
-# Prints current on boopt/dhcp-options
+# Prints all current dhcp-options for selected interface
 
 # Example Output:
 # Option 1: 255.255.255.0
 # Option 3: 172.16.98.1
 # Option 6: 172.16.98.1
 # Option 15: bredbandsbolaget.se
-# Option 51: 86400
-# Option 53: 5
-# Option 54: 172.16.98.1
+# ...
+
+# Example Output with -n
+# Option 1 (subnet_mask): 255.255.255.0
+# Option 3 (router): 172.16.98.1
+# Option 6 (domain_name_server): 172.16.98.1
+# Option 15 (domain_name): bredbandsbolaget.se
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### USAGE
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Usage: ./printDHCPOptions.bash [options] <argv>...
+#
+# Options:
+#  -i		(Optional) Interface Name (en0, en1...)
+#  -n		(Optional) Print option code names
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
@@ -31,6 +47,7 @@ print_usage() {
 	printf "\n%s\n\n" "Usage: ./${0##*/} [options] <argv>..."
 	printf "%s\n" "Options:"
 	printf "  %s\t%s\n" "-i" "(Optional) Interface Name (en0, en1...)"
+	printf "  %s\t%s\n" "-n" "(Optional) Print option code names"
 	printf "\n"
 }
 
