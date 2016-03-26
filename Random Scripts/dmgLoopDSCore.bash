@@ -25,6 +25,12 @@ function create_temporary_directories {
 }
 
 function remove_temporary_directories {
+	
+	# If anything is attached to the mountpoint, try to detach it first.
+	if diskutil info "${mountpoint}" >/dev/null 2>&1; then
+		detach_image
+	fi
+	
 	for dir in "${mountpoint}" "${extraction_dir}"; do
 		
 		# Remove temporary mountpoint if:
