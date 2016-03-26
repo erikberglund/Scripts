@@ -61,6 +61,12 @@ function parse_image {
 	# Get version from the mpkg name, not the best way but seems to be consistant.
 	ds_version=$( echo "${mountpoint}"/DeployStudio*.mpkg | sed -nE 's/.*_v?(.*)\.mpkg.*/\1/p' )
 	
+	# Another weak check, but better to exit here than to try extraction as it probably will fail if the version couldn't be found
+	if [[ -z ${ds_version} ]]; then
+		printf "%s\n" "Found no DeployStudio version number, probably not a DeployStudio dmg, ignoring..."	
+		return 0
+	fi
+	
 	# Extract DSCore.framework binary to extraction_dir
 	if (cd ${extraction_dir} && gunzip -c "${mountpoint}"/DeployStudio*.mpkg/Contents/Packages/deploystudioAdmin.pkg/Contents/Archive.pax.gz | pax -r -s ":./DeployStudio Admin.app/Contents/Frameworks/DSCore.framework/Versions/A:${extraction_dir}:" "./DeployStudio Admin.app/Contents/Frameworks/DSCore.framework/Versions/A/DSCore"); then
 		if grep -q '1YL601802TQ' "${extraction_dir}/DSCore"; then
@@ -96,10 +102,10 @@ create_temporary_directories
 # Setup trap to remove temporary direcotries on script exit
 trap remove_temporary_directories INT EXIT
 	
-# Stop globbing for printing itself if there are no matches
+# Stop globbing from printing itself if there are no matches
 shopt -s nullglob
 
-# Loop through all .dmg-files found in passed folder (or current working directory if no path was passed)
+# Loop through all .dmg-files found in passed directory (or current working directory if no directory was passed)
 for dmg in "${path:-${PWD}}"/*\.dmg; do
 		
 	# If anything is attached to the mountpoint, try to detach it first.
