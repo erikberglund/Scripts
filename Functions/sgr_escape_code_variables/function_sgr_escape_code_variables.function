@@ -1,0 +1,53 @@
+#!/bin/bash
+
+sgr_color() {
+	# Foreground text colors
+	blk=$'\e[30m' # Black
+	red=$'\e[31m' # Red
+	grn=$'\e[32m' # Green
+	yel=$'\e[33m' # Yellow
+	blu=$'\e[34m' # Blue
+	mag=$'\e[35m' # Magenta
+	cya=$'\e[36m' # Cyan
+	whi=$'\e[37m' # White
+	def=$'\e[39m' # Default (Foreground Color)
+	
+	# Deactivate ALL sgr attributes and colors.
+	clr=$'\e[0m'
+}
+
+sgr_bgcolor() {
+	# Background text colors
+	bgblk=$'\e[40m' # Black
+	bgred=$'\e[41m' # Red
+	bggrn=$'\e[42m' # Green
+	bgyel=$'\e[43m' # Yellow
+	bgblu=$'\e[44m' # Blue
+	bgmag=$'\e[45m' # Magenta
+	bgcya=$'\e[46m' # Cyan
+	bgwhi=$'\e[47m' # White
+	bgdef=$'\e[49m' # Default (Background Color)
+	
+	# Deactivate ALL sgr attributes and colors.
+	clr=$'\e[0m'
+}
+
+sgr_attributes() {
+	# Activate text attributes
+	bld=$'\e[1m' # Bold
+	dim=$'\e[2m' # Dim
+	uln=$'\e[4m' # Underline
+	bnk=$'\e[5m' # Blink
+	rev=$'\e[7m' # Reverse
+	hid=$'\e[8m' # Hidden
+	
+	# Deactivate text attributes
+	nobld=$'\e[22m' # Deactivate Bold
+	nouln=$'\e[24m' # Deactivate Underline
+	nobnk=$'\e[25m' # Deactivate Blink
+	norev=$'\e[27m' # Deactivate Reverse
+	nohid=$'\e[28m' # Deactivate Hidden
+	
+	# Deactivate ALL sgr attributes and colors.
+	clr=$'\e[0m'
+}
