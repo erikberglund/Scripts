@@ -53,7 +53,7 @@ wifi_power() {
 }
 
 current_wifi_power_state() {
-	printf "%s" "$( /usr/sbin/networksetup -getairportpower ${wifi_interface} | awk '{ print $NF }' | tr [:upper:] [:lower:] )"
+	printf "%s" "$( /usr/sbin/networksetup -getairportpower ${wifi_interface} | awk '{ print tolower($NF) }' )"
 }
 
 wifi_network() {
