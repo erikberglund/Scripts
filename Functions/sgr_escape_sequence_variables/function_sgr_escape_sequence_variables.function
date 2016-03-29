@@ -1,53 +1,57 @@
 #!/bin/bash
 
+# In the cases where I dont' know the tput commands,
+# I have used hardcoded ANSI/VT100 escape sequences as they
+# are recognized on Mac OS X where I write most of my scripts.
+
 sgr_color() {
 	# Foreground text colors
-	blk=$'\e[30m' # Black
-	red=$'\e[31m' # Red
-	grn=$'\e[32m' # Green
-	yel=$'\e[33m' # Yellow
-	blu=$'\e[34m' # Blue
-	mag=$'\e[35m' # Magenta
-	cya=$'\e[36m' # Cyan
-	whi=$'\e[37m' # White
-	def=$'\e[39m' # Default (Foreground Color)
+	blk=$(tput setaf 0) # Black
+	red=$(tput setaf 1) # Red
+	grn=$(tput setaf 2) # Green
+	yel=$(tput setaf 3) # Yellow
+	blu=$(tput setaf 4) # Blue
+	mag=$(tput setaf 5) # Magenta
+	cya=$(tput setaf 6) # Cyan
+	whi=$(tput setaf 7) # White
+	def=$'\e[39m'       # Default foreground color
 	
 	# Deactivate ALL sgr attributes and colors.
-	clr=$'\e[0m'
+	clr=$(tput sgr0)
 }
 
 sgr_bgcolor() {
 	# Background text colors
-	bgblk=$'\e[40m' # Black
-	bgred=$'\e[41m' # Red
-	bggrn=$'\e[42m' # Green
-	bgyel=$'\e[43m' # Yellow
-	bgblu=$'\e[44m' # Blue
-	bgmag=$'\e[45m' # Magenta
-	bgcya=$'\e[46m' # Cyan
-	bgwhi=$'\e[47m' # White
-	bgdef=$'\e[49m' # Default (Background Color)
+	bgblk=$(tput setab 0) # Black
+	bgred=$(tput setab 1) # Red
+	bggrn=$(tput setab 2) # Green
+	bgyel=$(tput setab 3) # Yellow
+	bgblu=$(tput setab 4) # Blue
+	bgmag=$(tput setab 5) # Magenta
+	bgcya=$(tput setab 6) # Cyan
+	bgwhi=$(tput setab 7) # White
+	bgdef=$'\e[49m'       # Default foreground color
 	
 	# Deactivate ALL sgr attributes and colors.
-	clr=$'\e[0m'
+	clr=$(tput sgr0)
 }
 
 sgr_attributes() {
 	# Activate text attributes
-	bld=$'\e[1m' # Bold
-	dim=$'\e[2m' # Dim
-	uln=$'\e[4m' # Underline
-	bnk=$'\e[5m' # Blink
-	rev=$'\e[7m' # Reverse
-	hid=$'\e[8m' # Hidden
+	bld=$(tput bold)  # Bold
+	dim=$(tput dim)   # Dim
+	uln=$(tput smul)  # Underline
+	bnk=$(tput blink) # Blink
+	rev=$(tput rev)   # Reverse
+	sto=$(tput smso)  # Standout
 	
 	# Deactivate text attributes
-	nobld=$'\e[22m' # Deactivate Bold
-	nouln=$'\e[24m' # Deactivate Underline
-	nobnk=$'\e[25m' # Deactivate Blink
-	norev=$'\e[27m' # Deactivate Reverse
-	nohid=$'\e[28m' # Deactivate Hidden
+	nobld=$'\e[22m'    # Deactivate Bold
+	nouln=$(tput rmul) # Deactivate Underline
+	nobnk=$'\e[25m'    # Deactivate Blink
+	norev=$'\e[27m'    # Deactivate Reverse
+	nosto=$(tput rmso) # Deactivate Standout
 	
 	# Deactivate ALL sgr attributes and colors.
-	clr=$'\e[0m'
+	clr=$(tput sgr0)
 }
