@@ -4,6 +4,9 @@
 # I have used hardcoded ANSI/VT100 escape sequences as they
 # are recognized on Mac OS X where I write most of my scripts.
 
+# I have a blog post about how to use these variables in a script here:
+# http://erikberglund.github.io/2016/Script_Tip_Modifying_text_appearance_in_console_output/
+
 sgr_color() {
 	# Foreground text colors
 	blk=$(tput setaf 0) # Black
