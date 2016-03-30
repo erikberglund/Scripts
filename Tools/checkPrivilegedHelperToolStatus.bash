@@ -13,10 +13,11 @@
 # Inspect all privileged helper tools installed in /Library/PrivilegedHelperTools and print info
 # about their installation status.
 
-# This script is in no way complete or accounts for all possible helper tool configurations. 
-# It's just written to illustrate one possible way to inspect helpers and determine if they should be removed.
+# DISCLAIMER:
+# This script is in no way a complete or recommended way to determine helper tool status.
+# It's just written to illustrate one possible way to inspect helpers and determine if they could/should be removed.
 
-# See my corresponding blog post here: 
+# See my accompanying blog post here: http://erikberglund.github.io/2016/PrivilegedHelperTools_Left_Behind/
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
@@ -26,8 +27,8 @@
 
 sgr_variables() {
 	# Colors
-	red=$(tput setaf 1) # Red
-	yel=$(tput setaf 3) # Yellow
+	red=$(tput setaf 1)	# Red
+	yel=$(tput setaf 3)	# Yellow
 	def=$'\e[39m'		# Default (Foreground Color)
 	
 	# Attributes
@@ -35,45 +36,50 @@ sgr_variables() {
 	nobld=$'\e[22m'		# Deactivate Bold
 	
 	# Clear
-	clr=$(tput sgr0)	# Deactivate ALL sgr attributes and colors.
+	clr=$(tput sgr0)	# Deactivate ALL sgr attributes and colors
 }
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
-### PLIST FUNCTIONS
+### FUNCTIONS - PLIST
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
 parse_plist_info_launchctl() {
 	
 	# Remove previous variables
-	unset helper_bundle_id; unset helper_bundle_name; unset helper_bundle_version; unset helper_application_bundle_ids
+	unset plist_info_error; unset helper_bundle_id; unset helper_bundle_name; unset helper_bundle_version; unset helper_application_bundle_ids
 	
 	# Try to retrieve the embedded Info.plist from the helper binary
 	plist_info_launchctl=$( launchctl plist __TEXT,__info_plist "${1}" 2>&1 )
 	
-	if (( ${?} == 0 )) && [[ -n ${plist_info_launchctl} ]]; then
+	# Get helper info from it's info plist
+	if [[ -n ${plist_info_launchctl} ]] && ! [[ ${plist_info_launchctl} =~ "does not have a __TEXT,__info_plist or is invalid."$ ]]; then
 		helper_bundle_id=$( awk -F'"' '/CFBundleIdentifier/ { print $(NF-1) }' <<< "${plist_info_launchctl}" )
 		helper_bundle_name=$( awk -F'"' '/CFBundleName/ { print $(NF-1) }' <<< "${plist_info_launchctl}" )
 		helper_bundle_version=$( awk -F'"' '/CFBundleVersion/ { print $(NF-1) }' <<< "${plist_info_launchctl}" )
 		while read -a smauthorizedclient_string; do
 			helper_application_bundle_ids+=( $( awk '/identifier$/ { getline; print }' <( printf '%s\n' "${smauthorizedclient_string[@]}" ) ) )
 		done < <( awk '/SMAuthorizedClients/ { flag=1; next } /\)\;/ { flag=0 } flag { print }' <<< "${plist_info_launchctl}" | sed 's/[="()]//g' )
-	elif (( ${?} != 0 )); then
-		printf "%s\n" "ERRORS! ${plist_info_launchctl}"
+	else
+		plist_info_error="${plist_info_launchctl}"
 	fi
 }
 
 parse_plist_launchd_launchctl() {
 	
 	# Remove previous variables
-	unset helper_launchd_label; unset helper_launchd_path
+	unset plist_launchd_error; unset helper_launchd_state; unset helper_launchd_label; unset helper_launchd_path
 	
 	# Try to retrieve the embedded Launchd.plist from the helper binary
 	plist_launchd_launchctl=$( launchctl plist __TEXT,__launchd_plist "${1}" 2>&1 )
-	
-	if (( ${?} == 0 )) && [[ -n ${plist_launchd_launchctl} ]]; then
+
+	if [[ -n ${plist_launchd_launchctl} ]] && ! [[ ${plist_launchd_launchctl} =~ "does not have a __TEXT,__launchd_plist or is invalid."$ ]]; then
+		
+		# Get launchd label from extracted plist.
 		helper_launchd_label=$( awk -F'"' '/Label/ { print $(NF-1) }' <<< "${plist_launchd_launchctl}" )
+		
+		# Call 'launchctl print' to get launchd job status
 		if [[ -n ${helper_launchd_label} ]]; then
 			while read line; do
 				if [[ ${line} =~ ^state ]]; then
@@ -87,18 +93,17 @@ parse_plist_launchd_launchctl() {
 			
 			# Sanity check so that the helper binary path is the same that's used as the program path in the launchd job
 			if [[ -n ${helper_launchd_program} ]] && [[ ${helper_launchd_program} != ${helper_path} ]]; then
-				printf "%s\n" "Current helper path and path in launchd job is not matching!"
+				printf "\n%s\n\n" "${bld}Current helpers path and path in launchd job is not matching!${clr}"
 			fi
 		fi
-		
-	elif (( ${?} != 0 )); then
-		printf "%s\n" "ERRORS: ${plist_info_launchctl}"
+	else
+		plist_launchd_error=${plist_launchd_launchctl}
 	fi	
 }
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
-### PRINT FUNCTIONS
+### FUNCTIONS - PRINT
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -109,18 +114,27 @@ print_title() {
 print_helper() {
 	print_title "Helper"
 	
-	printf "%22s\t%s\n\n" "Path:" "${helper_path}"
-	printf "%22s\t%-10s%s\n" "" "BundleID:" "${helper_bundle_id}"
-	printf "%22s\t%-10s%s\n" "" "Name:" "${helper_bundle_name}"
-	printf "%22s\t%-10s%s\n" "" "Version:" "${helper_bundle_version}"
+	if [[ -z ${plist_launchd_error} ]]; then
+		printf "%22s\t%s\n\n" "Path:" "${helper_path}"
+		printf "%22s\t%-10s%s\n" "" "BundleID:" "${helper_bundle_id}"
+		printf "%22s\t%-10s%s\n" "" "Name:" "${helper_bundle_name}"
+		printf "%22s\t%-10s%s\n" "" "Version:" "${helper_bundle_version}"
+	else
+		printf "%22s\t%s\n" "Path:" "${helper_path}"
+		printf "%22s\t%s\n" "Warning:" "${bld}${plist_info_error}${clr}"
+	fi
 }
 
 print_helper_launchd() {
 	print_title "Launchd"
 	
-	printf "%22s\t%s\n\n" "Path:" "${helper_launchd_path}"
-	printf "%22s\t%-10s%s\n" "" "Label:" "${helper_launchd_label}"	
-	printf "%22s\t%-10s%s\n" "" "State:" "${helper_launchd_state}"
+	if [[ -z ${plist_launchd_error} ]]; then
+		printf "%22s\t%s\n\n" "Path:" "${helper_launchd_path}"
+		printf "%22s\t%-10s%s\n" "" "Label:" "${helper_launchd_label}"
+		printf "%22s\t%-10s%s\n" "" "State:" "${helper_launchd_state}"
+	else
+		printf "%22s\t%s\n" "Warning:" "${bld}${plist_launchd_error}${clr}"
+	fi
 }
 
 print_helper_authorizationdb() {
@@ -140,25 +154,27 @@ print_helper_authorizationdb() {
 	
 	# Print out explicit info that no authorization db rules were found.
 	if (( rule_count == 0 )); then
-		printf "%22s\t%s\n" "Rules:" "<No AuthorizationDB Rules Found>"
+		printf "%22s\t%s\n" "Info:" "<No AuthorizationDB Rules Found>"
 	fi
 }
 
 print_helper_application() {
 	print_title "Applications"
 	
+	application_found='False'
 	for helper_application_bundle_id in ${helper_application_bundle_ids[@]}; do
 		if [[ -n ${helper_application_bundle_id} ]]; then
-			printf "%22s\t%s\n" "BundleID:" "${helper_application_bundle_id}"			
+			printf "%22s\t%s\n" "BundleID:" "${helper_application_bundle_id}"
 			application_count=0
 			while read helper_application_path; do
+				application_found='True'
 				((application_count++))
 				helper_application_name=$( /usr/libexec/PlistBuddy -c "Print :CFBundleName" "${helper_application_path}/Contents/Info.plist" )
 				helper_application_version=$( /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "${helper_application_path}/Contents/Info.plist" )
 				print_helper_application_info
 			done < <( mdfind "kMDItemCFBundleIdentifier == ${helper_application_bundle_id}" )
 		
-			# Print warning if no application matching the current bundle identifiers could .
+			# Print warning if no application matching the current bundle identifiers could
 			if (( application_count == 0 )); then
 				printf "%22s\t%s\n" "" "<No application with bundle id: '${helper_application_bundle_id}' found>"
 			fi
@@ -167,8 +183,8 @@ print_helper_application() {
 		fi
 	done
 	
-	# Print error if no application matching any of the bundle identifiers entered in the helper tool's SMAuthorizedClients array.
-	if (( application_count == 0 )); then
+	# Print error if no application matching any of the bundle identifiers entered in the helper tool's SMAuthorizedClients array
+	if [[ ${application_found} != True ]]; then
 		print_helper_left_behind
 	fi
 }
@@ -187,8 +203,10 @@ print_helper_info() {
 	
 	print_helper
 	print_helper_launchd
-	print_helper_authorizationdb
-	print_helper_application
+	if [[ -z ${plist_info_error} ]]; then
+		print_helper_authorizationdb
+		print_helper_application
+	fi
 }
 
 print_helper_left_behind() {
@@ -229,6 +247,10 @@ for helper_path in /Library/PrivilegedHelperTools/*; do
 		# Print all available info for current helper tool to stdout
 		print_helper_info
 	else
+		printf "\n"
+		printf "%0.1s" "*"{1..80}
+		printf "\n"
+		
 		printf "%s\n" "${helper_path} is not a file"
 	fi
 done
