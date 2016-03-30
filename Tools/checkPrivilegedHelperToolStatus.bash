@@ -10,6 +10,8 @@
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
+# CURRENTLY REQUIRES OS X 10.10 !!!
+
 # Inspect all privileged helper tools installed in /Library/PrivilegedHelperTools and print info
 # about their installation status.
 
@@ -17,7 +19,7 @@
 # This script is in no way a complete or recommended way to determine helper tool status.
 # It's just written to illustrate one possible way to inspect helpers and determine if they could/should be removed.
 
-# See my accompanying blog post here: http://erikberglund.github.io/2016/PrivilegedHelperTools_Left_Behind/
+# See my accompanying blog post here: http://erikberglund.github.io/2016/No_Privileged_Helper_Tool_Left_Behind/
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
@@ -232,7 +234,7 @@ if [[ ${EUID} -ne 0 ]]; then
 	printf "%s\n" "This script must be run as root!" 1>&2
 	exit 1
 elif (( $( sw_vers -productVersion | awk -F. '{ print $2 }' ) < 10 )); then
-	printf "%s\n" "This script requires OS X 10.10 or higher (because of the use of launchclt plist)" 1>&2
+	printf "%s\n" "This script requires OS X 10.10 or higher (because of the use of launchctl plist)" 1>&2
 	exit 1
 fi
 
