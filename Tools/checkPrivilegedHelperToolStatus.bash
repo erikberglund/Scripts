@@ -231,6 +231,9 @@ print_helper_left_behind() {
 if [[ ${EUID} -ne 0 ]]; then
 	printf "%s\n" "This script must be run as root!" 1>&2
 	exit 1
+elif (( $( sw_vers -productVersion | awk -F. '{ print $2 }' ) < 10 )); then
+	printf "%s\n" "This script requires OS X 10.10 or higher (because of the use of launchclt plist)" 1>&2
+	exit 1
 fi
 
 # Load variables
