@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ### Version 1.0.2
 ### Created by Erik Berglund
