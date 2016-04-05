@@ -12,11 +12,12 @@
 
 # Create disk images from OS X Installer applications (for archiving)
 
-# Can specify a folder or path to installer, then the script creats dmg-files named after the installer's InstallESD info.
-# Output final file in current working direcotry, or directory specified with the '-o' option.
-# Using the '-a' option will call mdfind to find all installer application on disk
+# Specify a folder containing OS X Installer Applications with the '-i' option.
+# Scrip will create a dmg and put the OS X Installer inside.
+# Output folder can be specified with the '-o' option, else current working direcotry will be used.
+# Using the '-a' option will call mdfind to find all installer application on disk.
 
-# Only tested with installers for 10.7+
+# Only works with "Mac App Store" OS X installer applications (10.7+)
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
@@ -49,11 +50,11 @@ parse_opts() {
 		error "User: ${USER} doesn't have write permissions for output folder: ${output_directory}"	
 	fi
 	
-	# Check if option -a was passed, then use mdfind to find all installers matching bundle id wildcard search: 'com.apple.InstallAssistant.*'
+	# Check if option '-a' was passed, then use mdfind to find all installers matching bundle id wildcard search: 'com.apple.InstallAssistant.*'
 	if [[ ${all_installers} == True ]]; then
-		old_ifs=${IFS}; IFS=$'\n'
+		old_ifs="${IFS}"; IFS=$'\n'
 		osx_installers=( $( mdfind "kMDItemCFBundleIdentifier == 'com.apple.InstallAssistant.*'c" ) )
-		IFS=${old_ifs}
+		IFS="${old_ifs}"
 	else
 		# Check 'input_directory' options, set to '/Applications' if non was passed.
 		if [[ -z ${input_directory} ]]; then
@@ -98,6 +99,9 @@ shopt -s nullglob
 
 # Parse passed arguments
 parse_opts "${@}"
+
+printf "%s\n" "Found the following OS X Installer Applications:"
+printf "%s\n" "${osx_installers[@]}"
 
 # Loop through all installers and create dmg in output directory
 for osx_installer in "${osx_installers[@]}"; do
@@ -145,7 +149,7 @@ for osx_installer in "${osx_installers[@]}"; do
 					systemversion_path="${base_system_mountpoint}/System/Library/CoreServices/SystemVersion.plist"
 				fi
 			else
-				error "Attach BaseSystem.dmg failed"
+				error "Attach ${install_esd_mountpoint}/BaseSystem.dmg failed"
 			fi
 		else
 			systemversion_path="${install_esd_mountpoint}/System/Library/CoreServices/SystemVersion.plist"
@@ -176,8 +180,8 @@ for osx_installer in "${osx_installers[@]}"; do
 		rm -rf "${install_esd_mountpoint}" || printf "%s\n" "Removing folder: ${mountpoint} failed!" >&2
 	fi
 	
-	# Assemble name for dmg volume and filename
-	name=$( sed 's/\ //g' <<< "${installer_name}_${installer_os_version}_${installer_os_build_version}" )
+	# Assemble name for dmg file and volume
+	name=$( sed 's/\ //g' <<< "${installer_os_version}_${installer_os_build_version}_${installer_name}" )
 	
 	# Check if target dmg already exist in selected ouptut directory
 	if [[ -f ${output_directory}/${name}.dmg ]]; then
@@ -186,11 +190,11 @@ for osx_installer in "${osx_installers[@]}"; do
 	fi
 	
 	# Remove quarantine attribute if present
-	xattr -d -r com.apple.quarantine "${osx_installer}" 2>&1
+	xattr -d -r com.apple.quarantine "${osx_installer}" > /dev/null 2>&1
 	
 	# Create installer dmg archive
 	printf "%s\n" "Creating ${output_directory}/${name}.dmg..."
-	if ! hdiutil create -srcfolder "${osx_installer}" -volname "${name}" -quiet "${name}"; then
+	if ! hdiutil create -srcfolder "${osx_installer}" -volname "${name}" "${output_directory}/${name}" 1> /dev/null ; then
 		error "Creating ${output_directory}/${name}.dmg failed"
 	fi
 done
