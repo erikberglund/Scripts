@@ -19,12 +19,12 @@
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
-function create_temporary_directories {
+create_temporary_directories() {
 	mountpoint=$( mktemp -d /private/tmp/dmg.XXXXX ) || error "Unable to create mountpoint"
 	extraction_dir=$( mktemp -d /private/tmp/pax.XXXXX ) || error "Unable to create extraction_dir"
 }
 
-function remove_temporary_directories {
+remove_temporary_directories() {
 	
 	# If anything is attached to the mountpoint, try to detach it first.
 	if diskutil info "${mountpoint}" >/dev/null 2>&1; then
@@ -42,15 +42,15 @@ function remove_temporary_directories {
 	done
 }
 
-function error {
-	printf "%s\n" "$1, exiting script..."; exit 1
+error() {
+	printf "%s\n" "$1, exiting script..." >&2; exit 1
 }
 
-function parse_opts {
+parse_opts() {
 	while getopts "p:" opt; do
 		case ${opt} in
-			p) path="${OPTARG}"
-			;;\?)	printf "%s\n" "Invalid option: -${OPTARG}";;
+			p) path="${OPTARG}" ;;
+			\?) printf "%s\n" "Invalid option: -${OPTARG}" ;;
 			:) printf "%s\n" "Option -${OPTARG} requires an argument." ;;
 		esac
 	done
@@ -60,7 +60,7 @@ function parse_opts {
 	fi
 }
 
-function parse_image {
+parse_image() {
 	
 	# Image is attached and mounted at ${mountpoint} when this function is called.
 	
@@ -90,7 +90,7 @@ function parse_image {
 	fi
 }
 
-function detach_image {
+detach_image() {
 	hdiutil detach "${mountpoint}" -force -quiet || error "Detach image failed"
 }
 
