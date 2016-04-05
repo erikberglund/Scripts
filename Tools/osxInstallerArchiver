@@ -10,10 +10,11 @@
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
-# Creates disk image from OS X Installer for archiving
+# Create disk images from OS X Installer applications (for archiving)
 
 # Can specify a folder or path to installer, then the script creats dmg-files named after the installer's InstallESD info.
-# Output final file in current working direcotry, or directory specified with the -i option.
+# Output final file in current working direcotry, or directory specified with the '-o' option.
+# Using the '-a' option will call mdfind to find all installer application on disk
 
 # Only tested with installers for 10.7+
 
@@ -50,7 +51,9 @@ parse_opts() {
 	
 	# Check if option -a was passed, then use mdfind to find all installers matching bundle id wildcard search: 'com.apple.InstallAssistant.*'
 	if [[ ${all_installers} == True ]]; then
-		osx_installers=( $( IFS=$'\n' mdfind "kMDItemCFBundleIdentifier == 'com.apple.InstallAssistant.*'c" ) )
+		old_ifs=${IFS}; IFS=$'\n'
+		osx_installers=( $( mdfind "kMDItemCFBundleIdentifier == 'com.apple.InstallAssistant.*'c" ) )
+		IFS=${old_ifs}
 	else
 		# Check 'input_directory' options, set to '/Applications' if non was passed.
 		if [[ -z ${input_directory} ]]; then
