@@ -129,7 +129,7 @@ for osx_installer in "${osx_installers[@]}"; do
 	install_esd_mountpoint=$( mktemp -d /private/tmp/dmg.XXXXX ) || error "Unable to create InstallESD mountpoint"
 	
 	# Attach current dmg at 'install_esd_mountpoint'
-	if hdiutil attach "${osx_installer}/Contents/SharedSupport/InstallESD.dmg" -noverify -nobrowse -readonly -owners on -mountpoint "${install_esd_mountpoint}" -quiet; then
+	if hdiutil attach "${osx_installer}/Contents/SharedSupport/InstallESD.dmg" -noverify -nobrowse -readonly -owners on -mountpoint "${install_esd_mountpoint}" 1> /dev/null; then
 		
 		# Add InstallESD mountpoint to mountpoints to remove after checking has finished
 		mountpoints=( "${install_esd_mountpoint}" )
@@ -140,7 +140,7 @@ for osx_installer in "${osx_installers[@]}"; do
 			base_system_mountpoint=$( mktemp -d /private/tmp/dmg.XXXXX ) || error "Unable to create BaseSystem mountpoint"
 			
 			# Attach BaseSystem.dmg at 'base_system_mountpoint'
-			if hdiutil attach "${install_esd_mountpoint}/BaseSystem.dmg" -noverify -nobrowse -readonly -owners on -mountpoint "${base_system_mountpoint}" -quiet; then
+			if hdiutil attach "${install_esd_mountpoint}/BaseSystem.dmg" -noverify -nobrowse -readonly -owners on -mountpoint "${base_system_mountpoint}" 1> /dev/null; then
 				
 				# Add mountpoint to mountpoints to remove after checking has finished
 				mountpoints+=( "${base_system_mountpoint}" )
@@ -168,8 +168,10 @@ for osx_installer in "${osx_installers[@]}"; do
 		
 		# Detach mounted dmgs
 		for mountpoint in "${mountpoints[@]}"; do
-			hdiutil detach "${mountpoint}" -force -quiet || printf "%s\n" "Detaching image mounted at: ${mountpoint} failed" >&2
-			rm -rf "${mountpoint}" || printf "%s\n" "Removing folder: ${mountpoint} failed!" >&2
+			if ! hdiutil detach "${mountpoint}" -force 1> /dev/null; then
+				printf "%s\n" "Detaching image mounted at: ${mountpoint} failed" >&2
+				rm -rf "${mountpoint}" || printf "%s\n" "Removing folder: ${mountpoint} failed!" >&2
+			fi
 		done
 	else
 		error "Attaching ${osx_installer}/Contents/SharedSupport/InstallESD.dmg failed"
@@ -194,7 +196,7 @@ for osx_installer in "${osx_installers[@]}"; do
 	
 	# Create installer dmg archive
 	printf "%s\n" "Creating ${output_directory}/${name}.dmg..."
-	if ! hdiutil create -srcfolder "${osx_installer}" -volname "${name}" "${output_directory}/${name}" 1> /dev/null ; then
+	if ! hdiutil create -srcfolder "${osx_installer}" -volname "${name}" "${output_directory}/${name}" 1> /dev/null; then
 		error "Creating ${output_directory}/${name}.dmg failed"
 	fi
 done
