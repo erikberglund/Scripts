@@ -10,8 +10,12 @@
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
-# Loops through all .dmg files (expects DeployStudio installation dmg) in passed path or working directory.
-# Extract DSCore binary and does a binary grep to see if it contains a string.
+# Creates disk image from OS X Installer for archiving
+
+# Can specify a folder or path to installer, then the script creats dmg-files named after the installer's InstallESD info.
+# Output final file in current working direcotry, or directory specified with the -i option.
+
+# Only tested with installers for 10.7+
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
@@ -20,49 +24,59 @@
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
 parse_opts() {
-	while getopts "o:p:" opt; do
+	while getopts "ai:o:" opt; do
 		case ${opt} in
-			o) output_directory="${OPTARG}" ;;
-			p) input_directory="${OPTARG}" ;;
+			a) all_installers='True' ;;
+			i) input_directory="${OPTARG%/}" ;;
+			o) output_directory="${OPTARG%/}" ;;
 			\?) printf "%s\n" "Invalid option: -${OPTARG}" >&2; exit 1;;
 			:) printf "%s\n" "Option -${OPTARG} requires an argument." >&2; exit 1;;
 		esac
 	done
 	
-	# Check 'input_directory' options, set to '/Applications' if non was passed.
-	if [[ -z ${input_directory} ]]; then
-		printf "%s\n" "No input directory specified, will use /Applications for input..."
-		input_directory="/Applications"
-	elif ! [[ -d ${input_directory} ]]; then
-		error "${input_directory} is not a directory"
-	fi
-	
-	# Add all OS X Installer Applications passing test to array 'osx_installers'
-	for app in "${input_directory}"/*\.app/; do
-		if [[ -f "${app}/Contents/Info.plist" ]] && [[ "$( /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "${app}/Contents/Info.plist" )" =~  ^com.apple.InstallAssistant.* ]]; then
-			osx_installers+=( "${app%/}" )
-		fi
-	done
-	
 	# Check 'output_directory' options, set to 'PWD' if none was passed.
 	if [[ -z ${output_directory} ]]; then
-		printf "%s\n" "No output directory specified, will use working directory for ouput..."
 		output_directory="${PWD}"
 	elif ! [[ -d ${output_directory} ]]; then
 		error "${output_directory} is not a directory"
 	fi
 	
+	printf "%s\n" "Output directory: ${output_directory}"
+	
 	# Check if current user has write capabilities for output_directory
 	if ! [[ -w ${output_directory} ]]; then
 		error "User: ${USER} doesn't have write permissions for output folder: ${output_directory}"	
 	fi
+	
+	# Check if option -a was passed, then use mdfind to find all installers matching bundle id wildcard search: 'com.apple.InstallAssistant.*'
+	if [[ ${all_installers} == True ]]; then
+		osx_installers=( $( IFS=$'\n' mdfind "kMDItemCFBundleIdentifier == 'com.apple.InstallAssistant.*'c" ) )
+	else
+		# Check 'input_directory' options, set to '/Applications' if non was passed.
+		if [[ -z ${input_directory} ]]; then
+			input_directory="/Applications"
+		elif ! [[ -d ${input_directory} ]]; then
+			error "${input_directory} is not a directory"
+		fi
+		
+		printf "%s\n" "Input directory: ${input_directory}"
+		
+		# Add all OS X Installer Applications passing test to array 'osx_installers'
+		for app in "${input_directory}"/*\.app/; do
+			if [[ -f "${app}/Contents/Info.plist" ]] && [[ "$( /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "${app}/Contents/Info.plist" )" =~  ^com.apple.InstallAssistant.* ]]; then
+				osx_installers+=( "${app%/}" )
+			fi
+		done
+	fi
+	
 }
 
-usage() { 
+usage() {
 	printf "%s\n" "Usage: ./${0##*/} [options] <argv>..."
 	printf "%s\n" "Options:"
-	printf "  %s\t%s\n" "-o" "Output directory"
-	printf "  %s\t%s\n" "-p" "(Optional) Input directory"
+	printf "  %s\t%s\n" "-a" "(Optional) All installer applications on computer (uses mdfind)"
+	printf "  %s\t%s\n" "-i" "(Optional) Input directory"
+	printf "  %s\t%s\n" "-o" "(Optional) Output directory"
 	printf "\n"
 }
 
@@ -76,18 +90,20 @@ error() {
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
-# Stop globbing from printing itself if there are no matches.
+# Stop globbing from printing itself if there are no matches
 shopt -s nullglob
 
-# Parse passed arguments.
+# Parse passed arguments
 parse_opts "${@}"
 
-# Loop through all installers and archive them to output folder
+# Loop through all installers and create dmg in output directory
 for osx_installer in "${osx_installers[@]}"; do
+	
+	printf "%s\n" "Checking ${osx_installer}..."
 	
 	# Verify InstallESD.dmg exists
 	if [[ ! -f ${osx_installer}/Contents/SharedSupport/InstallESD.dmg ]]; then
-		printf "%s\n" "No InstallESD" >&2
+		printf "%s\n" "${osx_installer}/Contents/SharedSupport/InstallESD.dmg, no such file or directory" >&2
 		continue
 	fi
 	
@@ -95,9 +111,10 @@ for osx_installer in "${osx_installers[@]}"; do
 	installer_name=$( /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "${osx_installer}/Contents/Info.plist" )
 	
 	# If InstallESD.dmg is already mounted, exit script and print it's current mountpoint.
+	# FIXME - This check should allow the script to use the mounted path instead of skipping, but for now just skip.
 	install_esd_mountpoint=$( hdiutil info -plist | xpath "/plist/dict/key[.='images']/following-sibling::array/dict/key[.='image-path']/following-sibling::string[1][contains(., \"${osx_installer}/Contents/SharedSupport/InstallESD.dmg\")]/../key[.='system-entities']/following-sibling::array/dict/key[.='mount-point']/following-sibling::string/text()" 2>/dev/null )
 	if [[ -n ${install_esd_mountpoint} ]]; then
-		printf "%s\n" "InstallESD is already mounted at: ${install_esd_mountpoint}" >&2
+		printf "%s\n" "${osx_installer}/Contents/SharedSupport/InstallESD.dmg is already mounted at: ${install_esd_mountpoint}, skipping" >&2
 		continue
 	fi
 	
@@ -106,33 +123,62 @@ for osx_installer in "${osx_installers[@]}"; do
 	
 	# Attach current dmg at 'install_esd_mountpoint'
 	if hdiutil attach "${osx_installer}/Contents/SharedSupport/InstallESD.dmg" -noverify -nobrowse -readonly -owners on -mountpoint "${install_esd_mountpoint}" -quiet; then
+		
+		# Add InstallESD mountpoint to mountpoints to remove after checking has finished
+		mountpoints=( "${install_esd_mountpoint}" )
+		
+		if [[ -f ${install_esd_mountpoint}/BaseSystem.dmg ]]; then
+			
+			# Create mountpoint for BaseSystem.dmg
+			base_system_mountpoint=$( mktemp -d /private/tmp/dmg.XXXXX ) || error "Unable to create BaseSystem mountpoint"
+			
+			# Attach BaseSystem.dmg at 'base_system_mountpoint'
+			if hdiutil attach "${install_esd_mountpoint}/BaseSystem.dmg" -noverify -nobrowse -readonly -owners on -mountpoint "${base_system_mountpoint}" -quiet; then
 				
+				# Add mountpoint to mountpoints to remove after checking has finished
+				mountpoints+=( "${base_system_mountpoint}" )
+				
+				if [[ -f ${base_system_mountpoint}/System/Library/CoreServices/SystemVersion.plist ]]; then
+					systemversion_path="${base_system_mountpoint}/System/Library/CoreServices/SystemVersion.plist"
+				fi
+			else
+				error "Attach BaseSystem.dmg failed"
+			fi
+		else
+			systemversion_path="${install_esd_mountpoint}/System/Library/CoreServices/SystemVersion.plist"
+		fi
+		
 		# Verify SystemVersion.plist exists
-		if [[ ! -f ${install_esd_mountpoint}/System/Library/CoreServices/SystemVersion.plist ]]; then
-			printf "%s\n" "Invalid InstallESD.dmg" >&2
-			hdiutil detach "${install_esd_mountpoint}" -force -quiet || printf "%s\n" "Detaching image failed" >&2
+		if [[ -f ${systemversion_path} ]]; then
+			
+			# Get installer os build and version
+			installer_os_version=$( /usr/libexec/PlistBuddy -c "Print :ProductUserVisibleVersion" "${systemversion_path}" )
+			installer_os_build_version=$( /usr/libexec/PlistBuddy -c "Print :ProductBuildVersion" "${systemversion_path}" )
+		else
+			printf "%s\n" "SystemVersion.plist not found inside ${osx_installer}/Contents/SharedSupport/InstallESD.dmg, skipping installer..." >&2
 			continue
 		fi
 		
-		# Get installer os build and version
-		installer_os_version=$( /usr/libexec/PlistBuddy -c "Print :ProductUserVisibleVersion" "${install_esd_mountpoint}/System/Library/CoreServices/SystemVersion.plist" )
-		installer_os_build_version=$( /usr/libexec/PlistBuddy -c "Print :ProductBuildVersion" "${install_esd_mountpoint}/System/Library/CoreServices/SystemVersion.plist" )
-		
-		# Detach InstallESD
-		hdiutil detach "${install_esd_mountpoint}" -force -quiet || printf "%s\n" "Detaching image failed" >&2
+		# Detach mounted dmgs
+		for mountpoint in "${mountpoints[@]}"; do
+			hdiutil detach "${mountpoint}" -force -quiet || printf "%s\n" "Detaching image mounted at: ${mountpoint} failed" >&2
+			rm -rf "${mountpoint}" || printf "%s\n" "Removing folder: ${mountpoint} failed!" >&2
+		done
 	else
-		error "Attach image failed"
+		error "Attaching ${osx_installer}/Contents/SharedSupport/InstallESD.dmg failed"
 	fi
 	
-	# Remove temporary mountpoint
-	rm -rf "${install_esd_mountpoint}"
+	# Remove temporary InstallESD mountpoint if still exists
+	if [[ -f ${install_esd_mountpoint} ]]; then
+		rm -rf "${install_esd_mountpoint}" || printf "%s\n" "Removing folder: ${mountpoint} failed!" >&2
+	fi
 	
-	# Create name for dmg
+	# Assemble name for dmg volume and filename
 	name=$( sed 's/\ //g' <<< "${installer_name}_${installer_os_version}_${installer_os_build_version}" )
 	
 	# Check if target dmg already exist in selected ouptut directory
-	if [[ -f ${output_directory}/${name} ]]; then
-		printf "%s\n" "${output_directory}/${name} already exist, skipping..." >&2
+	if [[ -f ${output_directory}/${name}.dmg ]]; then
+		printf "%s\n" "File ${output_directory}/${name} already exist, skipping..." >&2
 		continue	
 	fi
 	
@@ -140,8 +186,9 @@ for osx_installer in "${osx_installers[@]}"; do
 	xattr -d -r com.apple.quarantine "${osx_installer}" 2>&1
 	
 	# Create installer dmg archive
+	printf "%s\n" "Creating ${output_directory}/${name}.dmg..."
 	if ! hdiutil create -srcfolder "${osx_installer}" -volname "${name}" -quiet "${name}"; then
-		error "Creating installer dmg failed"
+		error "Creating ${output_directory}/${name}.dmg failed"
 	fi
 done
 
