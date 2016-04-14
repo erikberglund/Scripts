@@ -2,4 +2,4 @@
 
 Select a language to see available functions.
 
-* [Bash]()
+* [Bash](https://github.com/erikberglund/Scripts/tree/master/functions/Bash)

@@ -1,16 +1,20 @@
 ## Scripts
 
-### [Functions]()
-Functions I use in my scripts.
+In this repository I collect scripts and snippets.
 
-### Installer Scripts
-These are scripts designed to be run from an installer package.
+* [functions](https://github.com/erikberglund/Scripts/tree/master/functions)  
+ Functions I use in my scripts.
 
-### Random Scripts
-These are scripts that doesn't fit any other category.
+* [Installer Scripts]()  
+ These are scripts designed to be run from an installer package.
 
-### Tools
-These are scripts with a utility like feature to be used as tools.
+* [random](https://github.com/erikberglund/Scripts/tree/master/random)  
+ These are scripts that doesn't fit any other category.
 
-### Functions
-These are functions I use in my scripts.
+* [styleguide](https://github.com/erikberglund/Scripts/tree/master/styleguide)  
+ These are functions I use in my scripts.
+
+* [tools](https://github.com/erikberglund/Scripts/tree/master/tools)  
+ These are scripts with a utility like feature to be used as tools.
+
+
