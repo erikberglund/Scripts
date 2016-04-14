@@ -1,5 +1,8 @@
 ## Scripts
 
+### [Functions]()
+Functions I use in my scripts.
+
 ### Installer Scripts
 These are scripts designed to be run from an installer package.
 
