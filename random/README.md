@@ -20,4 +20,4 @@ Scripts that doesn't fit any other category.
  Reconnect to configured SSID (if in range) if: Disonnected, Another SSID selected, Wi-Fi card powered off.
 
 * [saveUserPictureToFile](https://github.com/erikberglund/Scripts/blob/master/random/saveUserPictureToFile)  
- Ouptut OS X user account picture to a file.
+ Save a OS X user's account picture to a file.
