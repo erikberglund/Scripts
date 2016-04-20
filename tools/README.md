@@ -1,6 +1,9 @@
 ## Tools
 These are scripts with a utility like feature to be used as tools.
 
+* [jekyllServe](https://github.com/erikberglund/Scripts/blob/master/tools/jekyllServe)  
+ Small convenience script to start serving a jekyll site (and open it in a browser).
+
 * [modelUTIInfo](https://github.com/erikberglund/Scripts/blob/master/tools/modelUTIInfo)  
  Get marketing name and icon path for Apple product by modelID or modelCode.
 
