@@ -1,5 +1,5 @@
 # Functions
 
-Select a language to see available functions.
+Functions I use in my scripts.
 
 * [Bash](https://github.com/erikberglund/Scripts/tree/master/functions/Bash)
