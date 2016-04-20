@@ -11,7 +11,7 @@ Scripts and snippets I've written.
 * [random](https://github.com/erikberglund/Scripts/tree/master/random)  
  Scripts that doesn't fit any other category.
 
-* [styleguide](https://github.com/erikberglund/Scripts/tree/master/styleguide)  
+* [styleguides](https://github.com/erikberglund/Scripts/tree/master/styleguides)  
  Styleguides i try to adhere to when writing scripts.
 
 * [tools](https://github.com/erikberglund/Scripts/tree/master/tools)  
