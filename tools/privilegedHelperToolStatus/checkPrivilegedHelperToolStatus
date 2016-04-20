@@ -176,7 +176,7 @@ print_helper_application() {
 				print_helper_application_info
 			done < <( mdfind "kMDItemCFBundleIdentifier == ${helper_application_bundle_id}" )
 		
-			# Print warning if no application matching the current bundle identifiers could
+			# Print warning if no application matching the current bundle identifiers could be found
 			if (( application_count == 0 )); then
 				printf "%22s\t%s\n" "" "<No application with bundle id: '${helper_application_bundle_id}' found>"
 			fi

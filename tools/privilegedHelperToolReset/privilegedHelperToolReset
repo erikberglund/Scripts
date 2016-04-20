@@ -19,7 +19,7 @@
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
-# Usage: ./resetHelper.bash [options] <argv>...
+# Usage: ./privilegedHelperToolReset.bash [options] <argv>...
 #
 # Options:
 #  -a		(Optional) Path to application (.app)
@@ -31,8 +31,8 @@
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
-helperLaunchdFilename="com.github.NBICreatorHelper.plist"
-helperBinaryFilename="com.github.NBICreatorHelper"
+helperLaunchdFilename=""	# Example: "com.github.NBICreatorHelper.plist"
+helperBinaryFilename=""		# Example: "com.github.NBICreatorHelper"
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
