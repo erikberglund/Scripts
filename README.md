@@ -1,20 +1,20 @@
 ## Scripts
 
-In this repository I collect scripts and snippets.
+Scripts and snippets I've written.
 
 * [functions](https://github.com/erikberglund/Scripts/tree/master/functions)  
  Functions I use in my scripts.
 
-* [Installer Scripts]()  
- These are scripts designed to be run from an installer package.
+* [Installer Scripts](https://github.com/erikberglund/Scripts/tree/master/installer)  
+ Scripts designed to be run in an OS X installer package.
 
 * [random](https://github.com/erikberglund/Scripts/tree/master/random)  
- These are scripts that doesn't fit any other category.
+ Scripts that doesn't fit any other category.
 
 * [styleguide](https://github.com/erikberglund/Scripts/tree/master/styleguide)  
- These are functions I use in my scripts.
+ Styleguides i try to adhere to when writing scripts.
 
 * [tools](https://github.com/erikberglund/Scripts/tree/master/tools)  
- These are scripts with a utility like feature to be used as tools.
+ Scripts with a utility like feature to be used as tools.
 
 
