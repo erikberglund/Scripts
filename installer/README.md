@@ -1,6 +1,6 @@
 ## Installer Scripts
 
-These are scripts designed to be run from an OS X installer package.
+Scripts designed to be run in an OS X installer package.
 
 * [installerCreateUser](https://github.com/erikberglund/Scripts/tree/master/installer/installerCreateUser)  
  Create local user account with multiple options.
