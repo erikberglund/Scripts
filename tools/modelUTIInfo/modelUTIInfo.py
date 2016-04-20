@@ -144,7 +144,7 @@ def main(argv):
 						print "[" + key + "]: " + device.model_icons[key]
 					break
 
-				# If no special option ecept model id or model code was passed, print all info for found devices
+				# If no special option except model id or model code was passed, print all info for found devices
 				else:
 					if idx == 0 and 1 < len(found_devices):
 						print '-' * 17
