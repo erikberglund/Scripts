@@ -36,9 +36,9 @@ create_folder() {
         # If folder path contains a mounted volume, check if volume is mounted before creating folder
         if [[ ${create_folder_folder} =~ ^/Volumes ]]; then
             local create_folder_folder_volume_mountpoint=$( awk -F"/" '{ print "/"$2"/"$3 }' <<< "${create_folder_folder}" )
-            if [[ ! -e "${create_folder_folder_volume_mountpoint}" ]] && [[ ! -d "${create_folder_folder_volume_mountpoint}" ]]; then
+            if [[ ! -d "${create_folder_folder_volume_mountpoint}" ]]; then
                 printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Unable to create folder: ${create_folder_folder}"
-                printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Mountpoint referenced in target path does not exist, will not create folder"
+                printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Mountpoint referenced in target path does not exist"
                 exit 1
             fi
         fi
