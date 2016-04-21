@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # In the cases where I dont' know the tput commands,
 # I have used hardcoded ANSI/VT100 escape sequences as they
