@@ -56,6 +56,8 @@ create_folder() {
             printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Unable to create folder: ${create_folder_folder}"
             printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "A file already exist at path"
             exit 1
+            
+        # If passed all checks and folder doesn't exist, create it
         else
             create_folder_mkdir_output=$( /bin/mkdir -p "${create_folder_folder/#\~/$HOME}" 2>&1 )
             if (( ${?} == 0 )); then
