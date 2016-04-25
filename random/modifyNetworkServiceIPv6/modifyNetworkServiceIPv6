@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+### Version 1.0.0
+### Created by Erik Berglund
+### https://github.com/erikberglund
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### DESCRIPTION
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# This script loops through all current network services and disabled IPv6.
+
+# This is for a discussion on macadmins.slack.com where @dirtydan asked how to do this
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### MAIN SCRIPT
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Loop through all active network services and disable IPv6.
+while read networkService; do
+	networksetup -setv6off "${networkService}"
+done < <( networksetup -listnetworkserviceorder | awk '/^\([0-9]/{$1 ="";gsub("^ ","");print}' )
+
+exit 0

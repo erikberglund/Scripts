@@ -10,6 +10,9 @@ Scripts that doesn't fit any other category.
 * [modifyNetworkServiceOrder](https://github.com/erikberglund/Scripts/blob/master/random/modifyNetworkServiceOrder)  
  Update network service order with prioritized services first and de-prioritized last.
 
+* [modifyNetworkServiceIPv6](https://github.com/erikberglund/Scripts/blob/master/random/modifyNetworkServiceIPv6)  
+ Disable IPv6 for all network services.
+
 * [printDHCPOptions](https://github.com/erikberglund/Scripts/blob/master/random/printDHCPOptions)  
  Print all DHCP-options for active or selected interface. Optionally print the option code name.
 
