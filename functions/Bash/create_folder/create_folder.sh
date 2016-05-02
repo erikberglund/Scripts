@@ -38,8 +38,8 @@ create_folder() {
         if [[ ${create_folder_folder} =~ ^/Volumes ]]; then
             local create_folder_folder_volume_mountpoint=$( awk -F"/" '{ print "/"$2"/"$3 }' <<< "${create_folder_folder}" )
             if [[ ! -d "${create_folder_folder_volume_mountpoint}" ]]; then
-                printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Unable to create folder: ${create_folder_folder}"
-                printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Mountpoint referenced in target path does not exist"
+                printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Unable to create folder: ${create_folder_folder}" >&2
+                printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Mountpoint referenced in target path does not exist" >&2
                 exit 1
             fi
         fi
@@ -54,8 +54,8 @@ create_folder() {
         
         # Check if folder path exists and is a file, exit with error
         elif [[ -f ${create_folder_folder} ]]; then
-            printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Unable to create folder: ${create_folder_folder}"
-            printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "A file already exist at path"
+            printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Unable to create folder: ${create_folder_folder}" >&2
+            printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "A file already exist at path" >&2
             exit 1
             
         # If passed all checks and folder doesn't exist, create it
@@ -64,8 +64,8 @@ create_folder() {
             if (( ${?} == 0 )); then
                 printf "%s %s\n" "[${FUNCNAME}]" "Folder '${create_folder_folder##*/}' was created successfully."
             else
-                printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Error creating folder: ${create_folder_folder}"
-                printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "$( /usr/bin/awk -F": " '{ print $3 }' <<< "${create_folder_mkdir_output}" )"
+                printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Error creating folder: ${create_folder_folder}" >&2
+                printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "$( /usr/bin/awk -F": " '{ print $3 }' <<< "${create_folder_mkdir_output}" )" >&2
                 exit 1
             fi
         fi

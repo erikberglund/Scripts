@@ -37,8 +37,8 @@ folder_hierachy_from_date() {
     # https://github.com/erikberglund/Scripts/blob/master/functions/Bash/folder_hierachy_from_date/folder_hierachy_from_date.sh
     # Verify input
     if [[ -z ${2} ]] && [[ -n ${1} ]] && [[ ${1} =~ "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" ]]; then
-        printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Passed date doesn't match the format YYYY-MM-DD, please pass a format string to successfully decode passed date."
-        printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Passed date: ${1}"
+        printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Passed date doesn't match the format YYYY-MM-DD, please pass a format string to successfully decode passed date." >&2
+        printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Passed date: ${1}" >&2
         exit 1
     fi
 
@@ -49,8 +49,8 @@ folder_hierachy_from_date() {
     if (( ${?} == 0 )) && [[ ${date_output} =~ ^[/0-9]*$ ]]; then
         printf "%s" "${date_output}"
     else
-        printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "$( sed -n '1p' <<< "${date_output}" )"
-        printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "$( sed -n '2p' <<< "${date_output}" )"
+        printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "$( sed -n '1p' <<< "${date_output}" )" >&2
+        printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "$( sed -n '2p' <<< "${date_output}" )" >&2
         exit 1
     fi
 }

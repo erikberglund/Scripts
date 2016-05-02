@@ -33,8 +33,8 @@ move_file_ftp() {
     # List current content of target directory (creating it if it doesn't exist)
     curl_output=$( curl --list-only --silent --show-error --ftp-create-dirs --user "${ftp_user}:${ftp_pass}" "ftp://${ftp_server}/${2}/" )
     if (( ${?} != 0 )); then
-        printf "%s\n" "Listing contents of ftp target directory '${2}' failed!"
-        printf "%s\n" "curl_output=${curl_output}"
+        printf "%s\n" "Listing contents of ftp target directory '${2}' failed!" >&2
+        printf "%s\n" "curl_output=${curl_output}" >&2
         exit 1
     fi
     
@@ -47,8 +47,8 @@ move_file_ftp() {
     # Move file from current directory to target directory
     curl_output=$( curl --quote "RNFR ${1}" --quote "RNTO ${2}/${1##*/}" --user "${ftp_user}:${ftp_pass}" "ftp://${ftp_server}" )
     if (( ${?} != 0 )); then
-        printf "%s\n" "Moving file '${1##*/}' to target directory '${2}' failed!"
-        printf "%s\n" "curl_output=${curl_output}"
+        printf "%s\n" "Moving file '${1##*/}' to target directory '${2}' failed!" >&2
+        printf "%s\n" "curl_output=${curl_output}" >&2
         exit 1
     fi
 }
