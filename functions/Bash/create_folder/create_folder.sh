@@ -31,6 +31,7 @@
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
 create_folder() {
+    # https://github.com/erikberglund/Scripts/blob/master/functions/Bash/create_folder/create_folder.sh
     for create_folder_folder in "${@}"; do
         
         # If folder path contains a mounted volume, check if volume is mounted before creating folder

@@ -1,6 +1,5 @@
 # create_folder
 
-
 Recursively create all folders passed to function.  
 Exists script if anything prevented folder creation.
 

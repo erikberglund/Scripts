@@ -34,7 +34,7 @@
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
 folder_hierachy_from_date() {
-
+    # https://github.com/erikberglund/Scripts/blob/master/functions/Bash/folder_hierachy_from_date/folder_hierachy_from_date.sh
     # Verify input
     if [[ -z ${2} ]] && [[ -n ${1} ]] && [[ ${1} =~ "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" ]]; then
         printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Passed date doesn't match the format YYYY-MM-DD, please pass a format string to successfully decode passed date."

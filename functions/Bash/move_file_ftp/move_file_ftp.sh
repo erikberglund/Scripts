@@ -29,6 +29,7 @@
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
 move_file_ftp() {
+    # https://github.com/erikberglund/Scripts/blob/master/functions/Bash/move_file_ftp/move_file_ftp.sh
     # List current content of target directory (creating it if it doesn't exist)
     curl_output=$( curl --list-only --silent --show-error --ftp-create-dirs --user "${ftp_user}:${ftp_pass}" "ftp://${ftp_server}/${2}/" )
     if (( ${?} != 0 )); then
