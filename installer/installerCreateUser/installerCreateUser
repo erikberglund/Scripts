@@ -360,7 +360,7 @@ if [[ ${userIsHidden} == yes ]]; then
         
         plistBuddy_output=$( "${cmd_PlistBuddy}" -c "Add :HiddenUsersList array" "${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist" 2>&1 )
         plistBuddy_exit_status=${?}
-        if [[ ${plistBuddy_exit_status} -ne 0 ]]; then
+        if [[ ${plistBuddy_exit_status} -ne 0 ]] && ! [[ ${plistBuddy_output} =~ "Entry Already Exists" ]]; then
             printf "%s\n" "[ERROR] Failed to create array in plist: ${targetVolumePath}/Library/Preferences/com.apple.loginwindow.plist"
             printf "%s\n" "[ERROR] plistBuddy_exit_status=${plistBuddy_exit_status}"
             printf "%s\n" "[ERROR] plistBuddy_output=${plistBuddy_output}"
