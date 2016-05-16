@@ -376,22 +376,22 @@ fi
 # Create user home folder
 if [[ ${createHomeDirectory} == yes ]]; then
 	printf "%s\n" "Creating user home folder..."
-	ditto_output=$( "${cmd_ditto}" "${path_localizedHomeDirectoryTemplate}" "${targetVolumePath}/Users/${userShortName}" 2>&1 )
+	ditto_output=$( "${cmd_ditto}" "${path_localizedHomeDirectoryTemplate}" "${targetVolumePath}/${userHomeDirectory}" 2>&1 )
 	ditto_exit_status=${?}
 	
 	if [[ ${ditto_exit_status} -ne 0 ]]; then
-		printf "%s\n" "[ERROR] Failed to copy (ditto) user home folder template to: ${targetVolumePath}/Users/${userShortName}"
+		printf "%s\n" "[ERROR] Failed to copy (ditto) user home folder template to: ${targetVolumePath}/${userHomeDirectory}"
 		printf "%s\n" "[ERROR] ditto_exit_status=${ditto_exit_status}"
 		printf "%s\n" "[ERROR] ditto_output=${ditto_output}"
 		exit ${ditto_exit_status}
 	fi
 	
 	printf "%s\n" "Setting correct permissions on user home folder..."
-	chown_output=$( "${cmd_chown}" -R ${userUID}:${userPrimaryGroupID} "${targetVolumePath}/Users/${userShortName}" 2>&1 )
+	chown_output=$( "${cmd_chown}" -R ${userUID}:${userPrimaryGroupID} "${targetVolumePath}/${userHomeDirectory}" 2>&1 )
 	chown_exit_status=${?}
 	
 	if [[ ${chown_exit_status} -ne 0 ]]; then
-		printf "%s\n" "[ERROR] Failed to copy (ditto) user home folder template to: ${targetVolumePath}/Users/${userShortName}"
+		printf "%s\n" "[ERROR] Failed to copy (ditto) user home folder template to: ${targetVolumePath}/${userHomeDirectory}"
 		printf "%s\n" "[ERROR] chown_exit_status=${chown_exit_status}"
 		printf "%s\n" "[ERROR] chown_output=${chown_output}"
 		exit ${chown_exit_status}
