@@ -107,7 +107,7 @@ if [[ -z ${targetVolumePath} ]] || ! [[ -d ${targetVolumePath} ]]; then
 fi
 
 # Add target volumes' standrad paths to our own PATH
-PATH="${targetVolumePath}/usr/bin":"${targetVolumePath}/bin":"${targetVolumePath}/usr/sbin":"${targetVolumePath}/sbin":"$PATH"
+PATH="${targetVolumePath}/usr/bin:${targetVolumePath}/bin:${targetVolumePath}/usr/sbin:${targetVolumePath}/sbin:${PATH}"
 
 # Get path to commands to be used in the script.
 cmd_awk=$( which awk )
