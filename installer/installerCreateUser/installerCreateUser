@@ -30,13 +30,13 @@
 # User short name may only contain the following characters: a-z, A-Z, 0-9, _ (underscore), - (hyphen), . (period)
 # It may only be 31 characters long and has to start with an alpha numeric character.
 # More info here on page 66-67: https://manuals.info.apple.com/MANUALS/1000/MA1181/en_US/UserMgmt_v10.6.pdf
-userShortName="firstnamelastname"
+userShortName="" # firstnamelastname
 
 # User full name.
-userRealName="Firstname Lastname"
+userRealName="" # Firstname Lastname
 
 # Password.
-userPassword="password"
+userPassword="" # password
 
 # Make user member of the 'admin' group.
 userIsAdmin="yes"
