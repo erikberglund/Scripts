@@ -10,6 +10,9 @@ Scripts and snippets I've written.
 
 * [random](https://github.com/erikberglund/Scripts/tree/master/random)  
  Scripts that doesn't fit any other category.
+ 
+* [snippets](https://github.com/erikberglund/Scripts/tree/master/snippets)  
+ Snippets I use in my scripts.
 
 * [styleguides](https://github.com/erikberglund/Scripts/tree/master/styleguides)  
  Styleguides i try to adhere to when writing scripts.
