@@ -5,7 +5,7 @@ Scripts and snippets I've written.
 * [functions](https://github.com/erikberglund/Scripts/tree/master/functions)  
  Functions I use in my scripts.
 
-* [Installer Scripts](https://github.com/erikberglund/Scripts/tree/master/installer)  
+* [installer](https://github.com/erikberglund/Scripts/tree/master/installer)  
  Scripts designed to be run in an OS X installer package.
 
 * [random](https://github.com/erikberglund/Scripts/tree/master/random)  
