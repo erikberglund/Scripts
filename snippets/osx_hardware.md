@@ -1,18 +1,18 @@
 # OS X Snippets: Hardware 
 
-### Serial Number (Computer)
+#### Serial Number (Computer)
 
 ```bash
 serialnumber=$( ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{print $(NF-1)}' )
 ```
 
-### Serial Number (Logic Board)
+#### Serial Number (Logic Board)
 
 ```bash
 mlb_serialnumber=$( nvram 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:MLB | awk '{ print $NF }' )
 ```
 
-### MAC Address
+#### MAC Address
 
 The MAC Address for an interface, in the example, `en0`
 
@@ -20,25 +20,25 @@ The MAC Address for an interface, in the example, `en0`
 mac_address=$( ifconfig en0 | awk '/ether/{ gsub(":",""); print toupper($2)}' )
 ```
 
-### MAC Address (Logic Board)
+#### MAC Address (Logic Board)
 
 ```bash
 mlb_mac_address=$( nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print $NF }' )
 ```
 
-### Board ID
+#### Board ID
 
 ```bash
 boardid=$( ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/board-id/{print $(NF-1)}' )
 ```
 
-### Model Identifier/ModelID/Machine Model
+#### Model Identifier/ModelID/Machine Model
 
 ```bash
 modelid=$( sysctl -n hw.model )
 ```
 
-### Laptop/Desktop
+#### Laptop/Desktop
 
 ```bash
 if [[ $( sysctl -n hw.model ) =~ [Bb]ook ]]; then
@@ -48,7 +48,7 @@ else
 fi
 ```
 
-### RAM Installed
+#### RAM Installed
 
 RAM installed (in GB without unit)
 
@@ -62,7 +62,7 @@ RAM installed (in MB without unit)
 ram=$(( $( sysctl -n hw.memsize ) >> 20 ))
 ```
 
-### Marketing Name
+#### Marketing Name
 
 **NOTE! Requires an internet connection**
 

@@ -1,6 +1,6 @@
 # OS X Snippets: OS 
 
-### OS Version
+#### OS Version
 
 Full version string:
 
@@ -19,13 +19,13 @@ IFS='.' read -r major minor patch < <( /usr/bin/sw_vers -productVersion )
 (patch=4)
 ```
 
-### OS Build Version
+#### OS Build Version
 
 ```bash
 os_build=$( sw_vers -buildVersion )
 ```
 
-### OS Marketing Name
+#### OS Marketing Name
 
 **NOTE! Requires an internet connection**
 
