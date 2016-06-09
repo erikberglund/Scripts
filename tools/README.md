@@ -12,6 +12,9 @@ These are scripts with a utility like feature to be used as tools.
 
 * [privilegedHelperToolReset](https://github.com/erikberglund/Scripts/blob/master/tools/privilegedHelperToolReset)  
  Stop and remove a privileged helper tool and launchd job.
+
+* [serverAppArchiver](https://github.com/erikberglund/Scripts/blob/master/tools/serverAppArchiver)  
+ Find and create disk images for OS X Server applications.
  
 * [sharedLibraryDependencyChecker](https://github.com/erikberglund/Scripts/blob/master/tools/sharedLibraryDependencyChecker)  
  List missing linked libraries on target volume recursively for one or more binaries.
