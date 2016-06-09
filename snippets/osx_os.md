@@ -5,7 +5,7 @@
 Full version string:
 
 ```bash
-os_version=$( sw_vers -productVersion )
+sw_vers -productVersion
 ```
 
 A variable for each component of the version string:
@@ -22,7 +22,7 @@ IFS='.' read -r major minor patch < <( /usr/bin/sw_vers -productVersion )
 #### OS Build Version
 
 ```bash
-os_build=$( sw_vers -buildVersion )
+sw_vers -buildVersion
 ```
 
 #### OS Marketing Name
