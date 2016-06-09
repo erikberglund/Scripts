@@ -1,0 +1,213 @@
+#!/usr/bin/env bash
+
+### Version 1.0.0
+### Created by Erik Berglund
+### https://github.com/erikberglund
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### DESCRIPTION
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Create disk image of Server.app (for archiving)
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### USAGE
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Usage: ./serverAppArchiver [options] <argv>...
+#
+# Options:
+#  -a       (Optional) Find and archive all server applications on system (ignores -i option)
+#  -i       (Optional) Input directory to search for applications
+#  -o       (Optional) Output directory for archives (defaults to working directory)
+#  -u       (Optional) Uploads all dmgs created to ftp and delete local dmg copy on success (ignores -o option)
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### VARIABLES
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+ftp_server=""
+ftp_user=""
+ftp_pass=""
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### FUNCIONS
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+upload='True'
+
+parse_opts() {
+    while getopts "ai:o:" opt; do
+        case ${opt} in
+            a) all_applications='True' ;;
+            i) input_directory="${OPTARG%/}" ;;
+            o) output_directory="${OPTARG%/}" ;;
+            u) upload='True' ;;
+            \?) printf "%s\n" "Invalid option: -${OPTARG}" >&2; exit 1;;
+            :) printf "%s\n" "Option -${OPTARG} requires an argument." >&2; exit 1;;
+        esac
+    done
+    
+    # Check 'output_directory' options, set to 'PWD' if none was passed.
+    if [[ ${upload} == True ]]; then
+        output_directory="/tmp"
+    elif [[ -z ${output_directory} ]]; then
+        output_directory="${PWD}"
+    elif ! [[ -d ${output_directory} ]]; then
+        error "${output_directory} is not a directory"
+    fi
+    
+    printf "%s\n" "Output directory: ${output_directory}"
+    
+    # Check if current user has write capabilities for output_directory
+    if ! [[ -w ${output_directory} ]]; then
+        error "User: ${USER} doesn't have write permissions for output folder: ${output_directory}" 
+    fi
+    
+    # Check if option '-a' was passed, then use mdfind to find all applications matching bundle id wildcard search: 'com.apple.Server.v*'
+    if [[ ${all_applications} == True ]]; then
+        old_ifs="${IFS}"; IFS=$'\n'
+        all_applications=( $( mdfind "kMDItemCFBundleIdentifier == 'com.apple.Server.v*'c" ) )
+        IFS="${old_ifs}"
+    fi
+    
+    if [[ ${all_applications} != True ]] || (( ${#all_applications[@]} == 0 )); then
+        # Check 'input_directory' options, set to '/Applications' if non was passed.
+        if [[ -z ${input_directory} ]]; then
+            input_directory="/Applications"
+        elif ! [[ -d ${input_directory} ]]; then
+            error "${input_directory} is not a directory"
+        fi
+        
+        printf "%s\n" "Input directory: ${input_directory}"
+        
+        # Add all server applications passing test to array 'all_applications'
+        for app in "${input_directory}"/*\.app/; do
+            if [[ -f "${app}/Contents/Info.plist" ]] && [[ "$( /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "${app}/Contents/Info.plist" 2>&1 )" =~  ^com.apple.Server.v* ]]; then
+                all_applications+=( "${app%/}" )
+            fi
+        done
+    fi
+    
+}
+
+usage() {
+    printf "%s\n" "Usage: ./${0##*/} [options] <argv>..."
+    printf "%s\n" "Options:"
+    printf "  %s\t%s\n" "-a" "(Optional) All server applications on computer (uses mdfind)"
+    printf "  %s\t%s\n" "-i" "(Optional) Input directory"
+    printf "  %s\t%s\n" "-o" "(Optional) Output directory"
+    printf "\n"
+}
+
+error() {
+    printf "%s\n" "${1}, exiting script..." >&2; exit 1
+}
+
+check_upload_status() {
+    if [[ $( /usr/bin/curl --connect-timeout 30 --retry 3 -l -u "${ftp_user}:${ftp_pass}" "ftp://${ftp_server}" 2>&1 | grep -E ^${1}$ ) == ${1} ]]; then
+        printf "%s" "exists"
+    else
+        printf "%s" "no"
+    fi
+}
+
+upload_dmg() {
+    curl_output=$( curl --connect-timeout 30 --retry 3 -S -T "${1}" -u "${ftp_user}:${ftp_pass}" "ftp://${ftp_server}/" 2>&1 )
+    if [[ ${?} -ne 0 ]]; then
+        error "Upload of file ${1} to server ${current_ftp_server} failed with error: "${curl_output}""
+    fi
+}
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### MAIN SCRIPT
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Stop globbing from printing itself if there are no matches
+shopt -s nullglob
+
+# Parse passed arguments
+parse_opts "${@}"
+
+printf "%s\n" "Found the following server applications:"
+printf "\t%s\n" "${all_applications[@]}"
+
+declare -a all_application_dmgs
+
+# Loop through all applications and create dmg in output directory
+for application in "${all_applications[@]}"; do
+    
+    printf "%s\n" "Checking ${application}..."
+        
+    # Get application name
+    application_name=$( /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "${application}/Contents/Info.plist" 2>&1 )
+    if [[ ${application_name} =~ "Does Not Exist" ]]; then
+        application_name=$( /usr/libexec/PlistBuddy -c "Print :CFBundleName" "${application}/Contents/Info.plist" 2>&1 )
+    fi
+    
+    # Get application version
+    application_version=$( /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "${application}/Contents/Info.plist" 2>&1 )
+    
+    # Get application build version
+    application_build_version=$( /usr/libexec/PlistBuddy -c "Print :ProductBuildVersion" "${application}/Contents/ServerRoot/System/Library/CoreServices/ServerVersion.plist" 2>&1 )
+    
+    # Assemble name for dmg file and volume
+    name=$( sed 's/\ //g' <<< "${application_name}_${application_version}-${application_build_version}" )
+    
+    # Check if target dmg already exist in selected ouptut directory
+    if [[ -f ${output_directory}/${name}.dmg ]]; then
+        if [[ ${upload} == True ]]; then
+            rm "${output_directory}/${name}.dmg"
+        else
+            printf "%s\n" "File: ${output_directory}/${name} already exist, skipping..." >&2
+            continue
+        fi
+    fi
+    
+    if [[ ${upload} == True ]] && [[ $( check_upload_status "${name}.dmg" ) == exists ]]; then
+        printf "%s\n" "File: ${name}.dmg already exist on the FTP, skipping..." >&2
+        continue
+    fi
+
+    # Remove quarantine attribute if present
+    xattr -d -r com.apple.quarantine "${application}" > /dev/null 2>&1
+    
+    # Create application dmg archive
+    printf "%s\n" "Creating ${output_directory}/${name}.dmg..."
+    if ! hdiutil create -srcfolder "${application}" -volname "${name}" "${output_directory}/${name}" 1> /dev/null; then
+        error "Creating ${output_directory}/${name}.dmg failed"
+    fi
+    
+    all_application_dmgs+=( "${output_directory}/${name}.dmg" )
+    
+    if [[ ${upload} == True ]]; then
+        printf "%s\n" "Uploading ${output_directory}/${name}.dmg..."
+        upload_dmg "${output_directory}/${name}.dmg"
+    fi
+done
+
+if [[ ${upload} == True ]]; then
+    # Remove all dmgs
+    for application_dmg in "${all_application_dmgs[@]}"; do
+        if [[ ${application_dmg} =~ ^.*Server_.*\.dmg$ ]]; then
+            rm "${application_dmg}"
+        else
+            printf "%s\n" "Unknown dmg in all_application_dmgs: ${application_dmg}"
+        fi
+    done
+fi
+
+# Restore globbing behaviour.
+shopt -u nullglob
+
+exit 0
