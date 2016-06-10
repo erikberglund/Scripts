@@ -4,6 +4,12 @@ Scripts that doesn't fit any other category.
 * [createWeblocWithCustomIcon](https://github.com/erikberglund/Scripts/blob/master/random/createWeblocWithCustomIcon)  
  Create a .webloc item on disk pointing at an URL, with option to use custom icon.
 
+* [dmgLoopDSCore](https://github.com/erikberglund/Scripts/blob/master/random/dmgLoopDSCore)  
+ Loops through DeployStudio installation dmgs, extract DSCore binary and does a binary grep for passed string.
+
+* [dmgLoopServerApp](https://github.com/erikberglund/Scripts/blob/master/random/dmgLoopServerApp)  
+ Loops through dmgs containing Server.app and extracting item at passed path.
+
 * [modifyNetworkServiceEnabled](https://github.com/erikberglund/Scripts/blob/master/random/modifyNetworkServiceEnabled)  
  Disable all network services except those whose name matches enabled regex.
 
