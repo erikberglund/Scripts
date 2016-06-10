@@ -1,8 +1,14 @@
 # OS X Snippets: OS 
 
+The following snippets are used to extract os information from a running OS X system.
+
+## Index
+
 * [OS Version](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_os.md#os-version)
 * [OS Build Version](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_os.md#os-build-version)
 * [OS Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_os.md#os-marketing-name)
+
+## Snippets
 
 #### OS Version
 
