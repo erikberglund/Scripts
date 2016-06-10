@@ -26,7 +26,13 @@ nvram 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:MLB | awk '{ print $NF }'
 The MAC Address for an interface, in the example, `en0`
 
 ```bash
-ifconfig en0 | awk '/ether/{ gsub(":",""); print toupper($2)}'
+ifconfig en0 | awk '/ether/{ gsub(":",""); print $2 }'
+```
+
+Uppercase output:
+
+```bash
+ifconfig en0 | awk '/ether/{ gsub(":",""); print toupper($2) }'
 ```
 
 #### MAC Address (Logic Board)
@@ -34,6 +40,13 @@ ifconfig en0 | awk '/ether/{ gsub(":",""); print toupper($2)}'
 ```bash
 nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print $NF }'
 ```
+
+Uppercase output:
+
+```bash
+nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print toupper($NF) }'
+```
+
 
 #### Board ID
 
