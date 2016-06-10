@@ -1,0 +1,216 @@
+#!/usr/bin/env bash
+
+### Version 1.0.0
+### Created by Erik Berglund
+### https://github.com/erikberglund
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### DESCRIPTION
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Loops through all .dmg files (expects Server.app at the root of the dmg) in passed path or working directory.
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### USAGE
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Usage: ./dmgLoopServerApp [options] <argv>...
+#
+# Options:
+#  -e                  Path rooted at /Server.app/Contents/ to file or folder to extract from Server.app
+#  -i       (Optional) Input directory to search for .dmg files
+#  -o                  Output directory for extracted files
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### FUNCIONS
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+create_temporary_directories() {
+    mountpoint=$( mktemp -d /private/tmp/dmg.XXXXX ) || error "Unable to create mountpoint"
+}
+
+remove_temporary_directories() {
+    
+    # If anything is attached to the mountpoint, try to detach it first.
+    if diskutil info "${mountpoint}" >/dev/null 2>&1; then
+        detach_image
+    fi
+    
+    for dir in "${mountpoint}"; do
+        
+        # Remove temporary mountpoint if:
+        #   * The variable contains an expected path
+        #   * The path exists and is a directory
+        if [[ ${dir} =~ ^/private/tmp/(dmg|cp).[a-zA-Z0-9]{5}$ ]] && [[ -d ${dir} ]]; then
+            rm -rf "${dir}"
+        fi
+    done
+}
+
+create_folder() {
+    # https://github.com/erikberglund/Scripts/blob/master/functions/Bash/create_folder/create_folder.sh
+    for create_folder_folder in "${@}"; do
+        
+        # If folder path contains a mounted volume, check if volume is mounted before creating folder
+        if [[ ${create_folder_folder} =~ ^/Volumes ]]; then
+            local create_folder_folder_volume_mountpoint=$( awk -F"/" '{ print "/"$2"/"$3 }' <<< "${create_folder_folder}" )
+            if [[ ! -d "${create_folder_folder_volume_mountpoint}" ]]; then
+                printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Unable to create folder: ${create_folder_folder}" >&2
+                printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Mountpoint referenced in target path does not exist" >&2
+                exit 1
+            fi
+        fi
+        
+        # Check if folder exists, else create it
+        if [[ -d ${create_folder_folder} ]]; then
+            if [[ -w ${create_folder_folder} ]]; then
+                printf "%s %s\n" "[${FUNCNAME}]" "Folder exist and current user ($( /usr/bin/id -un )) have write permissions."
+            else
+                printf "%s %s\n" "[${FUNCNAME}]" "Folder exist but current user ($( /usr/bin/id -un )) don't have write permissions."
+            fi
+        
+        # Check if folder path exists and is a file, exit with error
+        elif [[ -f ${create_folder_folder} ]]; then
+            printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Unable to create folder: ${create_folder_folder}" >&2
+            printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "A file already exist at path" >&2
+            exit 1
+            
+        # If passed all checks and folder doesn't exist, create it
+        else
+            create_folder_mkdir_output=$( /bin/mkdir -p "${create_folder_folder/#\~/$HOME}" 2>&1 )
+            if (( ${?} == 0 )); then
+                printf "%s %s\n" "[${FUNCNAME}]" "Folder '${create_folder_folder##*/}' was created successfully."
+            else
+                printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "Error creating folder: ${create_folder_folder}" >&2
+                printf "%s %s\n" "[$( basename ${BASH_SOURCE[0]}):${FUNCNAME}:${LINENO}]" "$( /usr/bin/awk -F": " '{ print $3 }' <<< "${create_folder_mkdir_output}" )" >&2
+                exit 1
+            fi
+        fi
+    done
+}
+
+usage() {
+    printf "%s\n" "Usage: ./${0##*/} [options] <argv>..."
+    printf "%s\n" "Options:"
+    printf "  %s\t%s\n" "-e" "Path  rooted at \"/Server.app/Contents/\" to file or folder to extract from Server.app"
+    printf "  %s\t%s\n" "-i" "(Optional) Input directory"
+    printf "  %s\t%s\n" "-o" "Output directory"
+    printf "\n"
+}
+
+error() {
+    printf "%s\n" "${1}, exiting script..." >&2; exit 1
+}
+
+parse_opts() {
+    while getopts "e:i:o:" opt; do
+        case ${opt} in
+            e) extraction_path="${OPTARG%/}" ;;
+            i) input_directory="${OPTARG%/}" ;;
+            o) output_directory="${OPTARG%/}" ;;
+            \?)  usage; exit 1 ;;
+            :)  usage; exit 1 ;;
+        esac
+    done
+    
+    if [[ -n ${input_directory} ]] && ! [[ -d ${input_directory} ]]; then
+        error "${input_directory} is not a directory"
+    fi
+    
+    if [[ -z ${extraction_path} ]]; then
+        usage; exit 1
+    fi
+    
+    if [[ -z ${output_directory} ]]; then
+        usage; exit 1
+    elif ! [[ -d ${output_directory} ]]; then
+        create_folder "${output_directory}"
+    fi
+}
+
+parse_image() {
+    
+    # Image is attached and mounted at ${mountpoint} when this function is called.
+    
+    # Get version from the Server.app Info.plist
+    server_version=$( /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "${mountpoint}/Server.app/Contents/Info.plist" 2>&1 )
+    if [[ -z ${server_version} ]] || [[ ${server_version} =~ "Does Not Exist" ]]; then
+        printf "%s\n" "Found no Server.app version number, probably not a Server.app dmg, ignoring..."; return 0
+    fi
+    
+    printf "%s\n" "Server Version: ${server_version}"
+    
+    if ! [[ -e ${mountpoint}/Server.app/Contents/${extraction_path} ]]; then
+        printf "${mountpoint}/Server.app/Contents/${extraction_path}: No such file or folder"; return 0
+    fi
+    
+    current_output_folder="${output_directory}/${server_version}"
+    
+    if ! [[ -d ${current_output_folder} ]]; then
+        create_folder "${current_output_folder}"
+    fi
+    
+    printf "%s\n" "Extracting ${extraction_path##*/}..."
+    
+    if ! cp -r "${mountpoint}/Server.app/Contents/${extraction_path}" "${current_output_folder}"; then
+        error "Extraction failed!"
+    fi
+    
+    printf "%s\n" "Extraction complete"
+}
+
+detach_image() {
+    hdiutil detach "${mountpoint}" -force -quiet || error "Detach image failed"
+}
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### MAIN SCRIPT
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Parse passed arguments.
+parse_opts "${@}"
+
+# Create temporary directories.
+create_temporary_directories
+
+# Setup trap to remove temporary direcotries on script exit.
+trap remove_temporary_directories INT EXIT
+    
+# Stop globbing from printing itself if there are no matches.
+shopt -s nullglob
+
+# Loop through all .dmg-files found in passed directory (or current working directory if no directory was passed).
+for dmg in "${input_directory:-${PWD}}"/*\.dmg; do
+        
+    # If anything is attached to the mountpoint, try to detach it first.
+    if diskutil info "${mountpoint}" >/dev/null 2>&1; then
+        detach_image
+    fi
+        
+    # If current dmg is already mounted, exit script and print mountpoint.
+    dmg_mountpath=$( hdiutil info -plist | xpath "/plist/dict/key[.='images']/following-sibling::array/dict/key[.='image-path']/following-sibling::string[1][contains(., \"${dmg}\")]/../key[.='system-entities']/following-sibling::array/dict/key[.='mount-point']/following-sibling::string/text()" 2>/dev/null )
+    if [[ -n ${dmg_mountpath} ]]; then
+        error "Image already mounted at: ${dmg_mountpath}"
+    fi
+        
+    # Attach current dmg at mountpoint
+    if hdiutil attach "${dmg}" -noverify -nobrowse -readonly -owners on -mountpoint "${mountpoint}" -quiet; then
+        parse_image
+        detach_image
+    else
+        error "Attach image failed"
+    fi
+done
+    
+# Restore globbing behaviour.
+shopt -u nullglob
+
+exit 0
