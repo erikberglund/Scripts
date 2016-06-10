@@ -73,11 +73,11 @@ parse_opts() {
     # Check if option '-a' was passed, then use mdfind to find all applications matching bundle id wildcard search: 'com.apple.Server.v*'
     if [[ ${all_applications} == True ]]; then
         old_ifs="${IFS}"; IFS=$'\n'
-        all_applications=( $( mdfind "kMDItemCFBundleIdentifier == 'com.apple.Server.v*'c" ) )
+        applications=( $( mdfind "kMDItemCFBundleIdentifier == 'com.apple.Server.v*'c" ) )
         IFS="${old_ifs}"
     fi
     
-    if [[ ${all_applications} != True ]] || (( ${#all_applications[@]} == 0 )); then
+    if [[ ${all_applications} != True ]] || (( ${#applications[@]} == 0 )); then
         # Check 'input_directory' options, set to '/Applications' if non was passed.
         if [[ -z ${input_directory} ]]; then
             input_directory="/Applications"
@@ -87,10 +87,10 @@ parse_opts() {
         
         printf "%s\n" "Input directory: ${input_directory}"
         
-        # Add all server applications passing test to array 'all_applications'
+        # Add all server applications passing test to array 'applications'
         for app in "${input_directory}"/*\.app/; do
             if [[ -f "${app}/Contents/Info.plist" ]] && [[ "$( /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "${app}/Contents/Info.plist" 2>&1 )" =~  ^com.apple.Server.v* ]]; then
-                all_applications+=( "${app%/}" )
+                applications+=( "${app%/}" )
             fi
         done
     fi
@@ -121,7 +121,7 @@ check_upload_status() {
 upload_dmg() {
     curl_output=$( curl --connect-timeout 30 --retry 3 -S -T "${1}" -u "${ftp_user}:${ftp_pass}" "ftp://${ftp_server}/" 2>&1 )
     if [[ ${?} -ne 0 ]]; then
-        error "Upload of file ${1} to server ${current_ftp_server} failed with error: "${curl_output}""
+        error "Upload of file ${1} to server ${ftp_server} failed with error: "${curl_output}""
     fi
 }
 
@@ -138,12 +138,12 @@ shopt -s nullglob
 parse_opts "${@}"
 
 printf "%s\n" "Found the following server applications:"
-printf "\t%s\n" "${all_applications[@]}"
+printf "\t%s\n" "${applications[@]}"
 
 declare -a all_application_dmgs
 
 # Loop through all applications and create dmg in output directory
-for application in "${all_applications[@]}"; do
+for application in "${applications[@]}"; do
     
     printf "%s\n" "Checking ${application}..."
         
@@ -194,8 +194,8 @@ for application in "${all_applications[@]}"; do
     fi
 done
 
+# Remove all local dmgs if 'upload' == True
 if [[ ${upload} == True ]]; then
-    # Remove all dmgs
     for application_dmg in "${all_application_dmgs[@]}"; do
         if [[ ${application_dmg} =~ ^.*Server_.*\.dmg$ ]]; then
             rm "${application_dmg}"
