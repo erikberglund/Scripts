@@ -57,7 +57,7 @@ You can also query the `SystemVersion.plist` file directly (useful for checking 
 
 **NOTE! Requires an internet connection**
 
-This retrieves the marketing name for a OS X version string from Apple's server.
+This retrieves the marketing name for an OS X version string from Apple's server.
 
 ```bash
 curl -s http://support-sp.apple.com/sp/product?edid=$( sw_vers -productVersion ) | xpath '/root/configCode/text()' 2>/dev/null
