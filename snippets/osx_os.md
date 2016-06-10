@@ -12,19 +12,19 @@ The following snippets are used to extract os information from an OS X system.
 
 #### OS Version
 
-On a running system:
+On a running system you can use the `sw_vers` command to query the os version.
 
 ```bash
 sw_vers -productVersion
 ```
 
-On a mounted system:
+You can also query the `SystemVersion.plist` file directly (useful for checking mounted systems):
 
 ```bash
 /usr/libexec/PlistBuddy -c "Print ProductVersion" "/System/Library/CoreServices/SystemVersion.plist"
 ```
 
-A variable for each component of the version string:
+If you need each component of the version string in separate variables, use the `read` command:
 
 ```bash
 IFS='.' read -r major minor patch < <( /usr/bin/sw_vers -productVersion )
@@ -37,13 +37,13 @@ IFS='.' read -r major minor patch < <( /usr/bin/sw_vers -productVersion )
 
 #### OS Build Version
 
-On a running system:
+On a running system you can use the `sw_vers` command to query the os build version.
 
 ```bash
 sw_vers -buildVersion
 ```
 
-On a mounted system:
+You can also query the `SystemVersion.plist` file directly (useful for checking mounted systems):
 
 ```bash
 /usr/libexec/PlistBuddy -c "Print ProductBuildVersion" "/System/Library/CoreServices/SystemVersion.plist"
@@ -52,6 +52,8 @@ On a mounted system:
 #### OS Marketing Name
 
 **NOTE! Requires an internet connection**
+
+This retrieves the marketing name for a OS X version string from Apple's server.
 
 ```bash
 curl -s http://support-sp.apple.com/sp/product?edid=$( sw_vers -productVersion ) | xpath '/root/configCode/text()' 2>/dev/null
