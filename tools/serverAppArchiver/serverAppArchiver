@@ -45,7 +45,7 @@ ftp_pass=""
 parse_opts() {
     while getopts "ai:o:u" opt; do
         case ${opt} in
-            a) all_applications='True' ;;
+            a) search_applications='True' ;;
             i) input_directory="${OPTARG%/}" ;;
             o) output_directory="${OPTARG%/}" ;;
             u) upload='True' ;;
@@ -71,13 +71,14 @@ parse_opts() {
     fi
     
     # Check if option '-a' was passed, then use mdfind to find all applications matching bundle id wildcard search: 'com.apple.Server.v*'
-    if [[ ${all_applications} == True ]]; then
+    if [[ ${search_applications} == True ]]; then
         old_ifs="${IFS}"; IFS=$'\n'
-        applications=( $( mdfind "kMDItemCFBundleIdentifier == 'com.apple.Server.v*'c" ) )
+        applications+=( $( mdfind "kMDItemCFBundleIdentifier == 'com.apple.Server.v*'c" ) )
+        applications+=( $( mdfind "kMDItemCFBundleIdentifier == 'com.apple.Server'c" ) )
         IFS="${old_ifs}"
     fi
     
-    if [[ ${all_applications} != True ]] || (( ${#applications[@]} == 0 )); then
+    if [[ ${search_applications} != True ]] || (( ${#applications[@]} == 0 )); then
         # Check 'input_directory' options, set to '/Applications' if non was passed.
         if [[ -z ${input_directory} ]]; then
             input_directory="/Applications"
@@ -121,7 +122,7 @@ check_upload_status() {
 upload_dmg() {
     curl_output=$( curl --connect-timeout 30 --retry 3 -S -T "${1}" -u "${ftp_user}:${ftp_pass}" "ftp://${ftp_server}/" 2>&1 )
     if [[ ${?} -ne 0 ]]; then
-        error "Upload of file ${1} to server ${ftp_server} failed with error: "${curl_output}""
+        error "Upload of file ${1} to server ${ftp_server} failed with error: ${curl_output}"
     fi
 }
 
@@ -157,10 +158,13 @@ for application in "${applications[@]}"; do
     application_version=$( /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "${application}/Contents/Info.plist" 2>&1 )
     
     # Get application build version
-    application_build_version=$( /usr/libexec/PlistBuddy -c "Print :ProductBuildVersion" "${application}/Contents/ServerRoot/System/Library/CoreServices/ServerVersion.plist" 2>&1 )
+    application_build_version="-$( /usr/libexec/PlistBuddy -c "Print :ProductBuildVersion" "${application}/Contents/ServerRoot/System/Library/CoreServices/ServerVersion.plist" 2>&1 )"
+    if [[ ${application_build_version} =~ "Does Not Exist" ]]; then
+        application_build_version=""
+    fi
     
     # Assemble name for dmg file and volume
-    name=$( sed 's/\ //g' <<< "${application_name}_${application_version}-${application_build_version}" )
+    name=$( sed 's/\ //g' <<< "${application_name}_${application_version}${application_build_version}" )
     
     # Check if target dmg already exist in selected ouptut directory
     if [[ -f ${output_directory}/${name}.dmg ]]; then
@@ -186,8 +190,10 @@ for application in "${applications[@]}"; do
         error "Creating ${output_directory}/${name}.dmg failed"
     fi
     
+    # Add path to dmg to all_application_dmgs
     all_application_dmgs+=( "${output_directory}/${name}.dmg" )
     
+    # Upload current dmg if 'upload' == True
     if [[ ${upload} == True ]]; then
         printf "%s\n" "Uploading ${output_directory}/${name}.dmg..."
         upload_dmg "${output_directory}/${name}.dmg"

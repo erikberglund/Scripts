@@ -52,7 +52,7 @@ ftp_pass=""
 parse_opts() {
     while getopts "ai:o:u" opt; do
         case ${opt} in
-            a) all_installers='True' ;;
+            a) search_applications='True' ;;
             i) input_directory="${OPTARG%/}" ;;
             o) output_directory="${OPTARG%/}" ;;
             u) upload='True' ;;
@@ -78,13 +78,13 @@ parse_opts() {
     fi
     
     # Check if option '-a' was passed, then use mdfind to find all installers matching bundle id wildcard search: 'com.apple.InstallAssistant.*'
-    if [[ ${all_installers} == True ]]; then
+    if [[ ${search_applications} == True ]]; then
         old_ifs="${IFS}"; IFS=$'\n'
         osx_installers=( $( mdfind "kMDItemCFBundleIdentifier == 'com.apple.InstallAssistant.*'c" ) )
         IFS="${old_ifs}"
     fi
     
-    if [[ ${all_installers} != True ]] || (( ${#osx_installers[@]} == 0 )); then
+    if [[ ${search_applications} != True ]] || (( ${#osx_installers[@]} == 0 )); then
         # Check 'input_directory' options, set to '/Applications' if non was passed.
         if [[ -z ${input_directory} ]]; then
             input_directory="/Applications"
@@ -229,12 +229,21 @@ for osx_installer in "${osx_installers[@]}"; do
     fi
     
     # Assemble name for dmg file and volume
-    name=$( sed 's/\ //g' <<< "${installer_os_version}-${installer_os_build_version}_${installer_name}" )
+    name=$( sed 's/\ //g' <<< "${installer_name}_${installer_os_version}-${installer_os_build_version}" )
     
     # Check if target dmg already exist in selected ouptut directory
     if [[ -f ${output_directory}/${name}.dmg ]]; then
-        printf "%s\n" "File ${output_directory}/${name} already exist, skipping..." >&2
-        continue    
+        if [[ ${upload} == True ]]; then
+            rm "${output_directory}/${name}.dmg"
+        else
+            printf "%s\n" "File: ${output_directory}/${name} already exist, skipping..." >&2
+            continue
+        fi
+    fi
+    
+    if [[ ${upload} == True ]] && [[ $( check_upload_status "${name}.dmg" ) == exists ]]; then
+        printf "%s\n" "File: ${name}.dmg already exist on the FTP, skipping..." >&2
+        continue
     fi
     
     # Remove quarantine attribute if present
@@ -256,8 +265,8 @@ done
 
 # Remove all local dmgs if 'upload' == True
 if [[ ${upload} == True ]]; then
-    for application_dmg in "${all_application_dmgs[@]}"; do
-        if [[ ${application_dmg} =~ ^.*Server_.*\.dmg$ ]]; then
+    for application_dmg in "${osx_installer_dmgs[@]}"; do
+        if [[ ${application_dmg} =~ \.dmg$ ]]; then
             rm "${application_dmg}"
         else
             printf "%s\n" "Unknown dmg in all_application_dmgs: ${application_dmg}"
