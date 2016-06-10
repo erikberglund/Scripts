@@ -50,6 +50,7 @@
 | 2.2.2   | N/A          | YES  |
 | 2.2.1   | N/A          | YES  |
 | 2.2     | N/A          | YES  |
+| 2.1.0   | N/A          | YES  |
 | 2.0.23  | N/A          | YES  |
 
 # OS X Lion Server
