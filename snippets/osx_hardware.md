@@ -12,7 +12,7 @@
 #### Serial Number (Computer)
 
 ```bash
-ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{print $(NF-1)}'
+ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{ print $(NF-1) }'
 ```
 
 #### Serial Number (Logic Board)
@@ -51,7 +51,7 @@ nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print
 #### Board ID
 
 ```bash
-ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/board-id/{print $(NF-1)}'
+ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/board-id/{ print $(NF-1) }'
 ```
 
 #### Model Identifier / Machine Model
@@ -89,5 +89,5 @@ $(( $( sysctl -n hw.memsize ) >> 20 ))
 **NOTE! Requires an internet connection**
 
 ```bash
-curl -s http://support-sp.apple.com/sp/product?cc=$( ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{ sn=$(NF-1); if (length(sn) == 12) count=3; else if (length(sn) == 11) count=2; print substr(sn, length(sn) - count, length(sn))}' ) | xpath '/root/configCode/text()' 2>/dev/null
+curl -s http://support-sp.apple.com/sp/product?cc=$( ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{ sn=$(NF-1); if (length(sn) == 12) count=3; else if (length(sn) == 11) count=2; print substr(sn, length(sn) - count, length(sn)) }' ) | xpath '/root/configCode/text()' 2>/dev/null
 ```
