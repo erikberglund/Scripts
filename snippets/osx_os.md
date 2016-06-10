@@ -1,6 +1,6 @@
 # OS X Snippets: OS 
 
-The following snippets are used to extract os information from a running OS X system.
+The following snippets are used to extract os information from an OS X system.
 
 ## Index
 
@@ -12,10 +12,16 @@ The following snippets are used to extract os information from a running OS X sy
 
 #### OS Version
 
-Full version string:
+On a running system:
 
 ```bash
 sw_vers -productVersion
+```
+
+On a mounted system:
+
+```bash
+/usr/libexec/PlistBuddy -c "Print ProductVersion" "/System/Library/CoreServices/SystemVersion.plist"
 ```
 
 A variable for each component of the version string:
@@ -31,8 +37,16 @@ IFS='.' read -r major minor patch < <( /usr/bin/sw_vers -productVersion )
 
 #### OS Build Version
 
+On a running system:
+
 ```bash
 sw_vers -buildVersion
+```
+
+On a mounted system:
+
+```bash
+/usr/libexec/PlistBuddy -c "Print ProductBuildVersion" "/System/Library/CoreServices/SystemVersion.plist"
 ```
 
 #### OS Marketing Name
