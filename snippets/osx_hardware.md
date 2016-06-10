@@ -1,5 +1,14 @@
 # OS X Snippets: Hardware 
 
+* [Serial Number (Computer)](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#serial-number-computer)
+* [Serial Number (Logic Board)](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#serial-number-logic-board)
+* [MAC Address](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#mac-address)
+* [MAC Address (Logic Board)](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#mac-address-logic-board)
+* [Board ID](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#board-id)
+* [Model Identifier / Machine Model](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#model-identifier--machine-model)
+* [RAM Installed](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#ram-installed)
+* [Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#marketing-name)
+
 #### Serial Number (Computer)
 
 ```bash
@@ -32,7 +41,7 @@ nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print
 ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/board-id/{print $(NF-1)}'
 ```
 
-#### Model Identifier/ModelID/Machine Model
+#### Model Identifier / Machine Model
 
 ```bash
 sysctl -n hw.model

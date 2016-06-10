@@ -1,5 +1,9 @@
 # OS X Snippets: OS 
 
+* [OS Version](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_os.md#os-version)
+* [OS Build Version](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_os.md#os-build-version)
+* [OS Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_os.md#os-marketing-name)
+
 #### OS Version
 
 Full version string:
