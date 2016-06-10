@@ -43,14 +43,14 @@ ftp_pass=""
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
 parse_opts() {
-    while getopts "ai:o:" opt; do
+    while getopts "ai:o:u" opt; do
         case ${opt} in
             a) all_applications='True' ;;
             i) input_directory="${OPTARG%/}" ;;
             o) output_directory="${OPTARG%/}" ;;
             u) upload='True' ;;
-            \?) printf "%s\n" "Invalid option: -${OPTARG}" >&2; exit 1;;
-            :) printf "%s\n" "Option -${OPTARG} requires an argument." >&2; exit 1;;
+            \?) usage; exit 1;;
+            :) usage; exit 1;;
         esac
     done
     
