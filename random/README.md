@@ -10,6 +10,9 @@ Scripts that doesn't fit any other category.
 * [dmgLoopServerApp](https://github.com/erikberglund/Scripts/blob/master/random/dmgLoopServerApp)  
  Loops through dmgs containing Server.app and extracting item at passed path.
 
+* [modifyAuthorizationDB](https://github.com/erikberglund/Scripts/tree/master/random/modifyAuthorizationDB)  
+ Reads, Modifies and Updates a rule in the authorization database
+
 * [modifyNetworkServiceEnabled](https://github.com/erikberglund/Scripts/blob/master/random/modifyNetworkServiceEnabled)  
  Disable all network services except those whose name matches enabled regex.
 
