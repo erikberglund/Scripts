@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+### Version 1.0.0
+### Created by Erik Berglund
+### https://github.com/erikberglund
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### DESCRIPTION
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# This script will:
+#   1. Print the system.login.console authorization db rule to a temporary file, 
+#   2. Iterate over the items in the 'mechanisms' array and removes any item defined in the script. 
+#   3. Update the authorization db rule with the modified plist
+
+# This is for a discussion on macadmins.slack.com where @owen.pragel asked for methods to modify the authorization db
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### VARIABLES
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Path for temporary rule plist
+authdb_rule_plist="/tmp/authdb_rule.plist"
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### MAIN SCRIPT
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Print the 'system.login.console' rule to a temporary file
+security authorizationdb read system.login.console 2> /dev/null > "${authdb_rule_plist}"
+
+counter=0
+
+# Loop through all items in the 'mechanisms' array
+while read mechanism; do
+    
+    # If mechanism contains 'TeamViewerAuthPlugin', remove it form temporary file
+    if [[ ${mechanism} =~ "TeamViewerAuthPlugin" ]]; then
+        /usr/libexec/PlistBuddy -c "Delete mechanisms:${counter}" "${authdb_rule_plist}"
+    else
+        ((counter++))
+    fi
+done < <( /usr/libexec/PlistBuddy -c "Print mechanisms" "${authdb_rule_plist}" | sed '1d; $d' )
+
+# Write the updated 'system.login.consol' rule back in the authorization db 
+security authorizationdb write system.login.console < "${authdb_rule_plist}"
+
+exit 0
