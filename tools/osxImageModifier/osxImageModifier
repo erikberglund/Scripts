@@ -1,0 +1,179 @@
+#!/usr/bin/env bash
+
+### Version 1.0.0
+### Created by Erik Berglund
+### https://github.com/erikberglund
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### DESCRIPTION
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# 
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### USAGE
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Usage: ./osxImageModifier [options] <argv>...
+#
+# Options:
+#  -i       (Optional) Input directory to search for os x images
+#  -o                  Output directory
+#  -s                  Script path
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### FUNCIONS
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+parse_opts() {
+    while getopts "i:o:s:" opt; do
+        case ${opt} in
+            i) input_directory="${OPTARG%/}" ;;
+            o) output_directory="${OPTARG%/}" ;;
+            s) path_script="${OPTARG%/}" ;;
+            \?) usage; exit 1;;
+            :) usage; exit 1;;
+        esac
+    done
+
+    if [[ -z ${input_directory} ]]; then
+        input_directory="${PWD}"
+    elif ! [[ -d ${input_directory} ]]; then
+        error "${input_directory} is not a directory"
+    fi
+        
+    printf "%s\n" "Input directory: ${input_directory}"    
+    
+    if [[ -z ${output_directory} ]]; then
+        output_directory="${input_directory}"
+    elif ! [[ -d ${output_directory} ]]; then
+        error "${output_directory} is not a directory"
+    fi
+    
+    printf "%s\n" "Output directory: ${output_directory}"
+    
+    if [[ -z ${path_script} ]]; then
+        usage; exit 1
+    elif ! [[ -f ${path_script} ]]; then
+        error "${path_script}: No such file or directory."
+    fi
+}
+
+usage() {
+    printf "%s\n" "Usage: ./${0##*/} [options] <argv>..."
+    printf "%s\n" "Options:"
+    printf "  %s\t%s\n" "-i" "(Optional) Input directory"
+    printf "  %s\t%s\n" "-i" "(Optional) Output directory"
+    printf "  %s\t%s\n" "-s" "Script to run"
+    printf "\n"
+}
+
+error() {
+    printf "%s\n" "${1}, exiting script..." >&2; exit 1
+}
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### MAIN SCRIPT
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Stop globbing from printing itself if there are no matches
+shopt -s nullglob
+
+# Parse passed arguments
+parse_opts "${@}"
+
+# Loop through all images and modify them if needed
+for osx_image in "${input_directory}"/*\.dmg; do
+    
+    printf "%s\n" "Checking ${osx_image}..."
+    
+    # If image is already mounted, exit script and print it's current mountpoint.
+    # FIXME - This check should allow the script to use the mounted path instead of skipping, but for now just skip.
+    osx_image_mountpoint=$( hdiutil info -plist | xpath "/plist/dict/key[.='images']/following-sibling::array/dict/key[.='image-path']/following-sibling::string[1][contains(., \"${osx_image}\")]/../key[.='system-entities']/following-sibling::array/dict/key[.='mount-point']/following-sibling::string/text()" 2>/dev/null )
+    if [[ -n ${osx_image_mountpoint} ]]; then
+        printf "%s\n" "${osx_image} is already mounted at: ${osx_image_mountpoint}, skipping" >&2
+        continue
+    fi
+    
+    # Create mountpoint for image
+    osx_image_mountpoint=$( mktemp -d /private/tmp/dmg.XXXXX ) || error "Unable to create image mountpoint"
+    osx_image_shadow="/private/tmp/shadow.$( env LC_CTYPE=C tr -dc "a-zA-Z0-9-_\$\?" < /dev/urandom | head -c 5 )"
+    
+    # Attach current dmg at 'osx_image_mountpoint'
+    if hdiutil attach "${osx_image}" -noverify -nobrowse -readwrite -owners on -mountpoint "${osx_image_mountpoint}" -shadow "${osx_image_shadow}" 1> /dev/null; then
+        
+        # Add dmg mountpoint to mountpoints to remove after checking has finished
+        mountpoints=( "${osx_image_mountpoint}" )
+        
+        # Verify SystemVersion.plist exists
+        systemversion_path="${base_system_mountpoint}/System/Library/CoreServices/SystemVersion.plist"
+        if [[ -f ${systemversion_path} ]]; then
+            
+            # Get os build and version
+            os_version=$( /usr/libexec/PlistBuddy -c "Print :ProductUserVisibleVersion" "${systemversion_path}" )
+            printf "%s\n" "OS Version: ${os_version}"
+            
+            os_build_version=$( /usr/libexec/PlistBuddy -c "Print :ProductBuildVersion" "${systemversion_path}" )
+            printf "%s\n" "OS Build: ${os_build_version}"
+        else
+            printf "%s\n" "SystemVersion.plist not found inside ${osx_image}, skipping image..." >&2
+            continue
+        fi
+        
+        # Run the passed script
+        source "${path_script}"
+        
+        # Detach mounted dmgs
+        for mountpoint in "${mountpoints[@]}"; do
+            if ! hdiutil detach "${mountpoint}" -force 1> /dev/null; then
+                printf "%s\n" "Detaching image mounted at: ${mountpoint} failed" >&2
+                rm -rf "${mountpoint}" || printf "%s\n" "Removing folder: ${mountpoint} failed!" >&2
+            fi
+        done
+        
+        # If image was modified, write shadow data into dmg
+        if [[ ${osx_image_modified} == True ]]; then
+            osx_image_name=$( basename "${osx_image}" )
+            if [[ ${input_directory} == ${output_directory} ]]; then
+                osx_image_output_path="${output_directory}/${osx_image_name%.*}_$( date +%F_%H%M%S ).dmg"
+            else
+                osx_image_output_path="${output_directory}/${osx_image_name}"
+            fi
+            
+            printf "%\n" "Converting image and shadow to output: ${osx_image_output_path}..."
+            if ! hdiutil convert -format UDZO -o "${osx_image_output_path}" "${osx_image}" -shadow "${osx_image_shadow}" 1> /dev/null; then
+                printf "%s\n" "Converting image and shadow failed!"
+            fi
+            
+            printf "%s\n" "Scanning image for restore..."
+            if ! asr imagescan --source "${osx_image_output_path}" 1> /dev/null; then
+                printf "%s\n" "Scanning image for restore failed!"
+            fi
+        fi
+    else
+        error "Attaching: ${osx_image} failed"
+    fi
+    
+    # Remove temporary image mountpoint if still exists
+    if [[ -f ${osx_image_mountpoint} ]]; then
+        rm -rf "${osx_image_mountpoint}" || printf "%s\n" "Removing folder: ${osx_image_mountpoint} failed!" >&2
+    fi
+    
+    # Remove temporary shadow file if still exists
+    if [[ -f ${osx_image_shadow} ]]; then
+        rm -rf "${osx_image_shadow}" || printf "%s\n" "Removing folder: ${osx_image_shadow} failed!" >&2
+    fi
+done
+
+# Restore globbing behaviour.
+shopt -u nullglob
+
+exit 0
