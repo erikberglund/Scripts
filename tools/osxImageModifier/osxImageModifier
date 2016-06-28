@@ -139,22 +139,34 @@ for osx_image in "${input_directory}"/*\.dmg; do
             fi
         done
         
+        # Prepare image output name and path
+        osx_image_name=$( basename "${osx_image}" )
+        if [[ ${input_directory} == ${output_directory} ]]; then
+            osx_image_output_path="${output_directory}/${osx_image_name%.*}_$( date +%F_%H%M%S ).dmg"
+        else
+            osx_image_output_path="${output_directory}/${osx_image_name}"
+        fi
+        
         # If image was modified, write shadow data into dmg
         if [[ ${osx_image_modified} == True ]]; then
-            osx_image_name=$( basename "${osx_image}" )
-            if [[ ${input_directory} == ${output_directory} ]]; then
-                osx_image_output_path="${output_directory}/${osx_image_name%.*}_$( date +%F_%H%M%S ).dmg"
-            else
-                osx_image_output_path="${output_directory}/${osx_image_name}"
-            fi
-            
             printf "%\n" "Converting image and shadow to output: ${osx_image_output_path}..."
             if ! hdiutil convert -format UDZO -o "${osx_image_output_path}" "${osx_image}" -shadow "${osx_image_shadow}" 1> /dev/null; then
                 printf "%s\n" "Converting image and shadow failed!"
             fi
+            osx_image_scan='True'
             
+            # If image was NOT modified but set to be converted, convert to UDZO
+        elif [[ ${osx_image_convert} == True ]]; then
+            printf "%\n" "Converting image to output: ${osx_image_output_path}..."
+            if ! hdiutil convert -format UDZO -o "${osx_image_output_path}" "${osx_image}" 1> /dev/null; then
+                printf "%s\n" "Converting image and shadow failed!"
+            fi
+            osx_image_scan='True'
+        fi
+        
+        if [[ ${osx_image_scan} == True ]]; then
             printf "%s\n" "Scanning image for restore..."
-            if ! asr imagescan --source "${osx_image_output_path}" 1> /dev/null; then
+            if ! asr imagescan --source "${osx_image_output_path:-${osx_image}}" 1> /dev/null; then
                 printf "%s\n" "Scanning image for restore failed!"
             fi
         fi

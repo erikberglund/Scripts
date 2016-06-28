@@ -15,6 +15,18 @@
 # EXAMPLES
 #
 
+# Static Variables
+#osx_image_modified=
+#osx_image_convert=
+#osx_image_scan=
+
+#
+# Verify image format is 'UDZO', else convert it
+#
+if [[ $( hdiutil imageinfo "${osx_image}" | awk '/Format:/ { print $NF }' ) != UDZO ]]; then
+    osx_image_convert='True'
+fi
+
 #
 # Verify /var/db/.AppleSetupDone exists
 #
@@ -33,13 +45,6 @@ else
 fi
 
 #
-# Remove user
-#
-username="macsupport"
-dscl -f "${osx_image_mountpoint}/var/db/dslocal/nodes/Default" localonly delete "/Local/Default/Users/${username}"
-rm -rf "${osx_image_mountpoint}/Users/${username}"
-
-#
 # Remove /var/db/.RunLanguageChooserToo if it exists
 #
 if [[ -f "${osx_image_mountpoint}/var/db/.RunLanguageChooserToo" ]]; then
@@ -50,6 +55,10 @@ if [[ -f "${osx_image_mountpoint}/var/db/.RunLanguageChooserToo" ]]; then
 else
     printf "%s\n" "Verified .RunLanguageChooserToo did not exist!"
 fi
+
+#
+# Remove user
+#
 
 
 #
@@ -85,8 +94,8 @@ if [[ -f "${application_path}/Contents/Info.plist" ]]; then
             printf "%s\n" "Copying ${application_local_path} failed!"
             exit 1
         fi
-		
-		osx_image_modified="True"
+        
+        osx_image_modified="True"
     fi
 else
     printf "%s\n" "${application_path}: No such file or directory"
