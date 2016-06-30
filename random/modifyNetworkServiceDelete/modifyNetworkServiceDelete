@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+### Version 1.0.0
+### Created by Erik Berglund
+### https://github.com/erikberglund
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### DESCRIPTION
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# This script loops through all network services in the configuration file and removes any whose name matches the regex provided.
+
+# This is for a discussion on macadmins.slack.com where @lukeisslacking wanted help with a similar script.
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### VARIABLES
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Path to network service preferences
+path_systemConfigurationPreferences="/Library/Preferences/SystemConfiguration/preferences.plist"
+
+# Regex for all network service names to remove
+network_services_delete_regex=""
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### MAIN SCRIPT
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Require root
+if (( ${EUID} != 0 )); then
+   printf "%s\n" "This script must be run as root" 1>&2
+   exit 1
+fi
+
+# Create backup of the preference file
+if [[ -f ${path_systemConfigurationPreferences} ]]; then
+    /bin/cp -f "${path_systemConfigurationPreferences}"{,.bak}
+else
+    printf "%s\n" "${path_systemConfigurationPreferences}: File does not exist" 1>&2
+    exit 1
+fi
+
+# Loop through all active network services and remove any that doesn't match ${network_services_delete_regex}.
+while read networkService; do
+    if [[ $( /usr/libexec/PlistBuddy -c "Print :NetworkServices:${networkService}:UserDefinedName" "${path_systemConfigurationPreferences}" ) =~ ${network_services_delete_regex} ]]; then
+        printf "%s\n" "Deleting: NetworkServices:${networkService}"
+        /usr/libexec/PlistBuddy -c "Delete :NetworkServices:${networkService}" "${path_systemConfigurationPreferences}"
+        /usr/libexec/PlistBuddy -c Save "${path_systemConfigurationPreferences}"
+    fi
+done < <( /usr/bin/xpath "${path_systemConfigurationPreferences}" "/plist/dict/dict[1]/key" 2>/dev/null | sed -E -e 's/<\/key><key>/\'$'\n/g' -e 's/(<key>|<\/key>)//g' )
+
+exit 0
