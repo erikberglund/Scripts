@@ -13,8 +13,11 @@ Scripts that doesn't fit any other category.
 * [modifyAuthorizationDB](https://github.com/erikberglund/Scripts/tree/master/random/modifyAuthorizationDB)  
  Reads, Modifies and Updates a rule in the authorization database
 
+* [modifyNetworkServiceDelete](https://github.com/erikberglund/Scripts/blob/master/random/modifyNetworkServiceDelete)  
+ Delete all network services whose name matches regex.
+
 * [modifyNetworkServiceEnabled](https://github.com/erikberglund/Scripts/blob/master/random/modifyNetworkServiceEnabled)  
- Disable all network services except those whose name matches enabled regex.
+ Disable all network services except those whose name matches regex.
 
 * [modifyNetworkServiceOrder](https://github.com/erikberglund/Scripts/blob/master/random/modifyNetworkServiceOrder)  
  Update network service order with prioritized services first and de-prioritized last.
