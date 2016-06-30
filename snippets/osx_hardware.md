@@ -12,6 +12,7 @@ The following snippets are used to extract hardware information from a running O
 * [Model Identifier / Machine Model](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#model-identifier--machine-model)
 * [RAM Installed](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#ram-installed)
 * [Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#marketing-name)
+* [Virtual Machine]()
 
 ## Snippets
 
@@ -109,4 +110,14 @@ printf "%s\n" "${ram}"
 ```bash
 curl -s http://support-sp.apple.com/sp/product?cc=$( ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{ sn=$(NF-1); if (length(sn) == 12) count=3; else if (length(sn) == 11) count=2; print substr(sn, length(sn) - count, length(sn)) }' ) | xpath '/root/configCode/text()' 2>/dev/null
 MacBook Pro (Retina, 15-inch, Mid 2015)
+```
+
+#### Virtual Machine
+
+```bash
+if sysctl -n machdep.cpu.features | grep -q "VMM"; then
+	printf "%s" "VM"
+else
+	printf "%s" "Not VM"	
+fi
 ```
