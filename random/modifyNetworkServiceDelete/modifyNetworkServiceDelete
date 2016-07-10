@@ -34,8 +34,8 @@ network_services_delete_regex=""
 
 # Require root
 if (( ${EUID} != 0 )); then
-   printf "%s\n" "This script must be run as root" 1>&2
-   exit 1
+    printf "%s\n" "This script must be run as root" 1>&2
+    exit 1
 fi
 
 # Create backup of the preference file
@@ -47,12 +47,18 @@ else
 fi
 
 # Loop through all active network services and remove any that doesn't match ${network_services_delete_regex}.
-while read networkService; do
-    if [[ $( /usr/libexec/PlistBuddy -c "Print :NetworkServices:${networkService}:UserDefinedName" "${path_systemConfigurationPreferences}" ) =~ ${network_services_delete_regex} ]]; then
-        printf "%s\n" "Deleting: NetworkServices:${networkService}"
-        /usr/libexec/PlistBuddy -c "Delete :NetworkServices:${networkService}" "${path_systemConfigurationPreferences}"
-        /usr/libexec/PlistBuddy -c Save "${path_systemConfigurationPreferences}"
-    fi
-done < <( /usr/bin/xpath "${path_systemConfigurationPreferences}" "/plist/dict/dict[1]/key" 2>/dev/null | sed -E -e 's/<\/key><key>/\'$'\n/g' -e 's/(<key>|<\/key>)//g' )
+while read networkServicesDict; do
+    while read networkService; do
+        networkServiceName=$( /usr/libexec/PlistBuddy -c "Print :$( sed -E 's/[ :]/\\&/g' <<< ${networkServicesDict} ):${networkService}:UserDefinedName" "${path_systemConfigurationPreferences}" 2>&1 )
+        printf "%s\n" "Checking network service name: ${networkServiceName}"
+        if [[ ${networkServiceName} =~ "Does Not Exist" ]]; then
+            /usr/libexec/PlistBuddy -c "Print" "${path_systemConfigurationPreferences}"
+        elif [[ ${networkServiceName} =~ ${network_services_delete_regex} ]]; then
+            printf "%s\n" "Deleting: NetworkServices:${networkService}"
+            /usr/libexec/PlistBuddy -c "Delete :$( sed -E 's/[ :]/\\&/g' <<< ${networkServicesDict} ):${networkService}" "${path_systemConfigurationPreferences}"
+            /usr/libexec/PlistBuddy -c Save "${path_systemConfigurationPreferences}"
+        fi
+    done < <( /usr/bin/xpath "${path_systemConfigurationPreferences}" "/plist/dict/key[.='${networkServicesDict}']/following-sibling::*[1]/key" 2>/dev/null | sed -E -e 's/<\/key><key>/\'$'\n/g' -e 's/(<key>|<\/key>)//g' )
+done < <( /usr/bin/xpath "${path_systemConfigurationPreferences}" "/plist/dict/key[contains(text(), 'NetworkServices')]" 2>/dev/null | sed -E -e 's/<\/key><key>/\'$'\n/g' -e 's/(<key>|<\/key>)//g' )
 
 exit 0
