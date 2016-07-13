@@ -1,6 +1,6 @@
 # OS X Snippets: Disk Images 
 
-The following snippets are used to handle disk images.
+The following snippets are used to work with disk images.
 
 ## Index
 
