@@ -32,6 +32,9 @@ Example using the El Capitan installer:
 ```bash
 disk_image="/Applications/Install OS X El Capitan.app/Contents/SharedSupport/InstallESD.dmg"
 
-# Output
+# Output if mounted
 InstallESD.dmg is mounted at: /Volumes/OS X Install ESD
+
+# Output if NOT mounted
+No mountpoint returned for disk image: InstallESD.dmg
 ```
