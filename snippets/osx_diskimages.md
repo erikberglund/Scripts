@@ -87,3 +87,32 @@ Disk Image: InstallESD.dmg is mounted at: /Volumes/OS X Install ESD
 # Output if NOT mounted
 Disk Image: InstallESD.dmg is NOT mounted
 ```
+
+#### Recovery Partition
+
+Check if the disk image have a recovery partition.
+
+```bash
+# Path to the disk image
+disk_image=""
+
+if (( $( hdiutil pmap "${disk_image}" | awk '/Apple_Boot/ || /Recovery HD/ { print 1 }' ) )); then
+    printf "%s\n" "Disk Image: ${disk_image##*/} have a recovery partition"
+else
+    printf "%s\n" "Disk Image: ${disk_image##*/} does NOT have a recovery partition"
+fi
+```
+
+Example using the El Capitan installer InstallESD.dmg disk image:
+
+```bash
+# Output
+Disk Image: InstallESD.dmg does NOT have a recovery partition
+```
+
+Example using an OS X System disk image created using AutoDMG:
+
+```bash
+# Output
+Disk Image: osx_10.11.5_15F34.hfs.dmg have a recovery partition
+``
