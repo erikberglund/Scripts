@@ -22,7 +22,7 @@
 #
 # Options:
 #  -i       (Optional) Input directory to search for os x images
-#  -o                  Output directory
+#  -o       (Optional) Output directory
 #  -s                  Script path
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,6 +84,11 @@ error() {
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
+# Verify script is run with administrator privileges
+if [[ ${EUID} -ne 0 ]]; then
+	error "This script must be run as root!"
+fi
+
 # Stop globbing from printing itself if there are no matches
 shopt -s nullglob
 
@@ -92,14 +97,19 @@ parse_opts "${@}"
 
 # Loop through all images and modify them if needed
 for osx_image in "${input_directory}"/*\.dmg; do
+
+    # Reset variables
+    osx_image_modified="False"
+    osx_image_convert="False"
+    osx_image_scan="False"
     
-    printf "%s\n" "Checking ${osx_image}..."
+    printf "%s\n" "Checking ${osx_image##*/}..."
     
     # If image is already mounted, exit script and print it's current mountpoint.
     # FIXME - This check should allow the script to use the mounted path instead of skipping, but for now just skip.
     osx_image_mountpoint=$( hdiutil info -plist | xpath "/plist/dict/key[.='images']/following-sibling::array/dict/key[.='image-path']/following-sibling::string[1][contains(., \"${osx_image}\")]/../key[.='system-entities']/following-sibling::array/dict/key[.='mount-point']/following-sibling::string/text()" 2>/dev/null )
-    if [[ -n ${osx_image_mountpoint} ]]; then
-        printf "%s\n" "${osx_image} is already mounted at: ${osx_image_mountpoint}, skipping" >&2
+    if [[ -d ${osx_image_mountpoint} ]]; then
+        printf "%s\n" "${osx_image##*/} is already mounted at: ${osx_image_mountpoint}, skipping" >&2
         continue
     fi
     
@@ -129,13 +139,14 @@ for osx_image in "${input_directory}"/*\.dmg; do
         fi
         
         # Run the passed script
+        printf "%s\n" "Running script: ${path_script##*/}"
         source "${path_script}"
         
         # Detach mounted dmgs
         for mountpoint in "${mountpoints[@]}"; do
             if ! hdiutil detach "${mountpoint}" -force 1> /dev/null; then
                 printf "%s\n" "Detaching image mounted at: ${mountpoint} failed" >&2
-                rm -rf "${mountpoint}" || printf "%s\n" "Removing folder: ${mountpoint} failed!" >&2
+                rm -rf "${mountpoint}" || printf "%s\n" "Removing mountpoint folder: ${mountpoint} failed!" >&2
             fi
         done
         
@@ -149,7 +160,7 @@ for osx_image in "${input_directory}"/*\.dmg; do
         
         # If image was modified, write shadow data into dmg
         if [[ ${osx_image_modified} == True ]]; then
-            printf "%\n" "Converting image and shadow to output: ${osx_image_output_path}..."
+            printf "s%\n" "Converting image and shadow to output: ${osx_image_output_path}..."
             if ! hdiutil convert -format UDZO -o "${osx_image_output_path}" "${osx_image}" -shadow "${osx_image_shadow}" 1> /dev/null; then
                 printf "%s\n" "Converting image and shadow failed!"
             fi
@@ -157,7 +168,7 @@ for osx_image in "${input_directory}"/*\.dmg; do
             
             # If image was NOT modified but set to be converted, convert to UDZO
         elif [[ ${osx_image_convert} == True ]]; then
-            printf "%\n" "Converting image to output: ${osx_image_output_path}..."
+            printf "%s\n" "Converting image to output: ${osx_image_output_path}..."
             if ! hdiutil convert -format UDZO -o "${osx_image_output_path}" "${osx_image}" 1> /dev/null; then
                 printf "%s\n" "Converting image and shadow failed!"
             fi
