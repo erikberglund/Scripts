@@ -1,6 +1,6 @@
 # OS X Snippets: Disk Images 
 
-The following snippets are used to work with disk images.
+The following snippets are used to interact with disk images.
 
 _Unless otherwise stated, all examples will be using the El Captian InstallESD.dmg disk image for example output:_
 
@@ -12,10 +12,11 @@ disk_image="/Applications/Install OS X El Capitan.app/Contents/SharedSupport/Ins
 
 * [Format](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#format)
 * [Mountpoint](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#mountpoint)
+* [Recovery Partition](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#recovery-partition)
 
 ## Snippets
 
-#### Format
+### Format
 
 Format is any one of the following abbreviations:
 
@@ -59,7 +60,7 @@ Example using the El Capitan installer InstallESD.dmg disk image:
 Disk Image: InstallESD.dmg has format: UDZO
 ```
 
-#### Mountpoint
+### Mountpoint
 
 Returns the mountpoint for disk image at path.
 
@@ -88,7 +89,7 @@ Disk Image: InstallESD.dmg is mounted at: /Volumes/OS X Install ESD
 Disk Image: InstallESD.dmg is NOT mounted
 ```
 
-#### Recovery Partition
+### Recovery Partition
 
 Check if the disk image have a recovery partition.
 
@@ -115,4 +116,4 @@ Example using an OS X System disk image created using AutoDMG:
 ```bash
 # Output
 Disk Image: osx_10.11.5_15F34.hfs.dmg have a recovery partition
-``
+```
