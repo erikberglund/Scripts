@@ -28,6 +28,13 @@ if [[ $( hdiutil imageinfo "${osx_image}" | awk '/Format:/ { print $NF }' ) != U
 fi
 
 #
+# Verify image partition scheme is 'GUID', else recreate image
+#
+if [[ $( hdiutil imageinfo "${osx_image}" | awk '/partition-scheme:/ { print $NF }' ) != GUID ]]; then
+    osx_image_recreate='True'
+fi
+
+#
 # Verify /var/db/.AppleSetupDone exists
 #
 if [[ ${osx_image} =~ "DBGY-Vagn" ]] && ! [[ -f "${osx_image_mountpoint}/var/db/.AppleSetupDone" ]]; then
@@ -68,6 +75,8 @@ if (( $( hdiutil pmap "${osx_image}" | awk '/Apple_Boot/ || /Recovery HD/ { prin
     osx_image_has_recovery="YES"
 else
     osx_image_has_recovery="NO"
+    osx_image_add_recovery='True'
+    recovery_image=""
 fi
 printf "%s\n" "Has Recovery: ${osx_image_has_recovery}"
 

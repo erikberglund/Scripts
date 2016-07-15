@@ -27,6 +27,14 @@
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 ###
+### VARIABLES
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+redirect_out="1> /dev/null"
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
 ### FUNCIONS
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
@@ -86,7 +94,7 @@ error() {
 
 # Verify script is run with administrator privileges
 if [[ ${EUID} -ne 0 ]]; then
-	error "This script must be run as root!"
+    error "This script must be run as root!"
 fi
 
 # Stop globbing from printing itself if there are no matches
@@ -99,7 +107,9 @@ parse_opts "${@}"
 for osx_image in "${input_directory}"/*\.dmg; do
 
     # Reset variables
+    osx_image_add_recovery="False"
     osx_image_modified="False"
+    osx_image_recreate="False"
     osx_image_convert="False"
     osx_image_scan="False"
     
@@ -118,10 +128,10 @@ for osx_image in "${input_directory}"/*\.dmg; do
     osx_image_shadow="/private/tmp/shadow.$( env LC_CTYPE=C tr -dc "a-zA-Z0-9-_\$\?" < /dev/urandom | head -c 5 )"
     
     # Attach current dmg at 'osx_image_mountpoint'
-    if hdiutil attach "${osx_image}" -noverify -nobrowse -readwrite -owners on -mountpoint "${osx_image_mountpoint}" -shadow "${osx_image_shadow}" 1> /dev/null; then
+    if hdiutil attach "${osx_image}" -noverify -nobrowse -readwrite -owners on -mountpoint "${osx_image_mountpoint}" -shadow "${osx_image_shadow}" ; then
         
         # Add dmg mountpoint to mountpoints to remove after checking has finished
-        mountpoints=( "${osx_image_mountpoint}" )
+        mountpoints+=( "${osx_image_mountpoint}" )
         
         # Verify SystemVersion.plist exists
         systemversion_path="${base_system_mountpoint}/System/Library/CoreServices/SystemVersion.plist"
@@ -137,48 +147,176 @@ for osx_image in "${input_directory}"/*\.dmg; do
             printf "%s\n" "SystemVersion.plist not found inside ${osx_image}, skipping image..." >&2
             continue
         fi
+                
+        # Prepare image output name and path
+        osx_image_name=$( basename "${osx_image}" )
+        if [[ ${input_directory} == ${output_directory} ]]; then
+            osx_image_output_path="${output_directory}/$( sed -E "s/(\.hfs\.dmg|\.dmg)/_$( date +%F_%H%M%S ).hfs.dmg/" <<< ${osx_image_name} )"
+        else
+            osx_image_output_path="${output_directory}/${osx_image_name}"
+        fi
+        osx_image_output_name=$( basename "${osx_image_output_path}" )
         
         # Run the passed script
         printf "%s\n" "Running script: ${path_script##*/}"
         source "${path_script}"
         
+        # Get size for disk image
+        osx_image_size=$( df "${osx_image_mountpoint}" | awk -v mountpoint="${osx_image_mountpoint}" '{ if ($9 == mountpoint ) print $2; }' )
+        if [[ ${osx_image_size} =~ ^[0-9]+$ ]]; then
+            printf "%s\n" "Volume size (bytes): $((${osx_image_size}*512))"
+        else
+            printf "%s\n" "Volume size returned for volume at path: ${osx_image_mountpoint} is not valid!" >&2
+            continue
+        fi
+        
+        # Get used size for disk image
+        osx_image_size_used=$( df "${osx_image_mountpoint}" | awk -v mountpoint="${osx_image_mountpoint}" '{ if ($9 == mountpoint ) print $3; }' )
+        if [[ ${osx_image_size_used} =~ ^[0-9]+$ ]]; then
+            printf "%s\n" "Volume size used (bytes): $((${osx_image_size_used}*512))"
+        else
+            printf "%s\n" "Volume size used returned for volume at path: ${osx_image_mountpoint} is not valid!" >&2
+            continue
+        fi
+        
+        if [[ ${osx_image_recreate} == True ]]; then
+            printf "%s\n" "Recreating image to use GUID partition scheme..."
+                        
+            # Update values for osx_image as this will be the new target from here on
+            osx_image="$( dirname "${osx_image_output_path}" )/$( sed -E 's/(\.hfs\.dmg|\.dmg)/_GUID.hfs.dmg/' <<< ${osx_image_output_name} )"
+            
+            # Add 1GB (2097152 512-byte sectors) to allow adding a recovery partiton
+            if ! hdiutil create -srcfolder "${osx_image_mountpoint}" -sectors $((${osx_image_size_used}+2097152)) -volname "Macintosh HD" -format UDRW -layout GPTSPUD "${osx_image}" ; then
+                printf "%s\n" "Recreating image mounted at: ${osx_image_mountpoint} failed" >&2
+                continue
+            fi
+            
+            osx_image_mountpoint=$( mktemp -d /private/tmp/dmg.XXXXX ) || error "Unable to create image mountpoint"
+            
+            # Attach the newly created disk image
+            if ! hdiutil attach "${osx_image}" -noverify -nobrowse -readwrite -owners on -mountpoint "${osx_image_mountpoint}" ; then
+                printf "%s\n" "Attaching: ${osx_image} failed" >&2
+                continue
+            fi
+            
+            # Add dmg mountpoint to mountpoints to remove after checking has finished
+            mountpoints+=( "${osx_image_mountpoint}" )
+            
+            # Set to add recovery partition
+            osx_image_add_recovery='True'
+            osx_image_convert='True'
+        fi
+        
+        if [[ ${osx_image_add_recovery} == True ]]; then
+            printf "%s\n" "Adding recovery partition..."
+            
+            # Verify recovery image path is set and valid
+            if ! [[ -f ${recovery_image} ]]; then
+                printf "%s\n" "Recovery Image: ${recovery_image} NOT found!" >&2
+                continue
+            fi
+            
+            # Verify the recovery source image have a recovery partition
+            # FIXME - This requires that no volume is mounted, possibly check for that or use diskutil if mounted
+            if ! (( $( hdiutil pmap "${recovery_image}" | awk '/Apple_Boot/ || /Recovery HD/ { print 1 }' ) )); then
+                printf "%s\n" "Source disk image: ${recovery_image##*/} have NO recovery partition!" >&2
+            fi
+            
+            recovery_image_mountpoint=$( mktemp -d /private/tmp/dmg.XXXXX ) || error "Unable to create recovery image mountpoint"
+            
+            # Attach the recovery source image
+            if ! hdiutil attach "${recovery_image}" -noverify -nobrowse -readonly -owners on -mountpoint "${recovery_image_mountpoint}"; then
+                printf "%s\n" "Attaching: ${recovery_image##*/} failed" >&2
+                continue
+            fi
+            
+            # Add dmg mountpoint to mountpoints to remove after checking has finished
+            mountpoints+=( "${recovery_image_mountpoint}" )
+            
+            # Get the recovery hd device identifier
+            recovery_image_volume_device_identifier="$( diskutil list "${recovery_image_mountpoint}" | awk '/Apple_Boot/ || /Recovery HD/ { print $NF }' )"
+            
+            # Get the image system volume device node
+            osx_image_volume_device_node=$( diskutil info "${osx_image_mountpoint}" | awk '/Device Node:/ { print $NF }' )
+            
+            # Add dmg mountpoint to mountpoints to remove after checking has finished
+            mountpoints+=( "${osx_image_volume_device_node}" )
+            
+            # Resize the image system volume to fit recovery partition
+            # FIXME - This assumes the disk has free space, should check
+            if ! diskutil quiet resizeVolume "${osx_image_volume_device_node}" "${osx_image_size_used}S" JHFS+ EmptyRecoveryHD 1m; then
+                printf "%s\n" "Resizing volume at device node: ${osx_image_volume_device_node} failed" >&2
+                continue
+            fi
+            
+            # Get the new image recovery volume device identifier
+            osx_recovery_image_volume_device_identifier="$( diskutil list "${osx_image_volume_device_node}" | awk '/EmptyRecoveryHD/ { print $NF }' )"
+            
+            if [[ ${recovery_image_volume_device_identifier} =~ disk ]] && [[ ${osx_recovery_image_volume_device_identifier} =~ disk ]]; then
+                printf "%s\n" "Restoring source recovery partition on disk image..."
+                
+                # Restore recovery partition from source image to os x image
+                if ! asr restoreexact --source "/dev/${recovery_image_volume_device_identifier}" --target "/dev/${osx_recovery_image_volume_device_identifier}" --erase --noprompt; then
+                    printf "%s\n" "Restoring source recovery partition failed!"
+                    continue
+                fi
+            else
+                printf "%s\n" "A device identifier could not be found!" >&2
+                printf "%s\n" "recovery_image_volume_device_identifier=${recovery_image_volume_device_identifier}" >&2
+                printf "%s\n" "osx_recovery_image_volume_device_identifier=${osx_recovery_image_volume_device_identifier}" >&2
+                exit 1
+            fi
+            osx_image_convert='True'
+        fi
+                
         # Detach mounted dmgs
+        printf "%s\n" "Unmounting volumes at mountpoints: ${mountpoints[@]}"
         for mountpoint in "${mountpoints[@]}"; do
-            if ! hdiutil detach "${mountpoint}" -force 1> /dev/null; then
+            
+            if ! hdiutil detach "${mountpoint}" -force ; then
                 printf "%s\n" "Detaching image mounted at: ${mountpoint} failed" >&2
+                mountpoint="/Volumes/$( basename "${mountpoint}" )"
+            else
                 rm -rf "${mountpoint}" || printf "%s\n" "Removing mountpoint folder: ${mountpoint} failed!" >&2
+                continue
+            fi
+            
+            # Try again 
+            if ! hdiutil detach "${mountpoint}" -force ; then
+                printf "%s\n" "Detaching image mounted at: ${mountpoint} failed" >&2
+            else
+                rm -rf "${mountpoint}" || printf "%s\n" "Removing mountpoint folder: ${mountpoint} failed!" >&2
+                continue
             fi
         done
-        
-        # Prepare image output name and path
-        osx_image_name=$( basename "${osx_image}" )
-        if [[ ${input_directory} == ${output_directory} ]]; then
-            osx_image_output_path="${output_directory}/${osx_image_name%.*}_$( date +%F_%H%M%S ).dmg"
-        else
-            osx_image_output_path="${output_directory}/${osx_image_name}"
-        fi
-        
+                    
         # If image was modified, write shadow data into dmg
-        if [[ ${osx_image_modified} == True ]]; then
-            printf "s%\n" "Converting image and shadow to output: ${osx_image_output_path}..."
-            if ! hdiutil convert -format UDZO -o "${osx_image_output_path}" "${osx_image}" -shadow "${osx_image_shadow}" 1> /dev/null; then
+        if [[ ${osx_image_recreate} != True ]] && [[ ${osx_image_modified} == True ]]; then
+            printf "%s\n" "Converting image and shadow to output: ${osx_image_output_path}..."
+            if ! hdiutil convert -format UDZO -o "${osx_image_output_path}" "${osx_image}" -shadow "${osx_image_shadow}" ; then
                 printf "%s\n" "Converting image and shadow failed!"
+                continue
             fi
             osx_image_scan='True'
-            
-            # If image was NOT modified but set to be converted, convert to UDZO
-        elif [[ ${osx_image_convert} == True ]]; then
-            printf "%s\n" "Converting image to output: ${osx_image_output_path}..."
-            if ! hdiutil convert -format UDZO -o "${osx_image_output_path}" "${osx_image}" 1> /dev/null; then
-                printf "%s\n" "Converting image and shadow failed!"
-            fi
-            osx_image_scan='True'
+            osx_image_convert='False'
         fi
         
+        # Convert to UDZO
+        if [[ ${osx_image_convert} == True ]]; then
+            printf "%s\n" "Converting image to output: ${osx_image_output_path}..."
+            if ! hdiutil convert -format UDZO -o "${osx_image_output_path}" "${osx_image}" ; then
+                printf "%s\n" "Converting image and shadow failed!"
+                continue
+            fi
+            osx_image_scan='True'
+        fi 
+        
+        # Scan image for restore
         if [[ ${osx_image_scan} == True ]]; then
             printf "%s\n" "Scanning image for restore..."
-            if ! asr imagescan --source "${osx_image_output_path:-${osx_image}}" 1> /dev/null; then
+            if ! asr imagescan --source "${osx_image_output_path:-${osx_image}}" ; then
                 printf "%s\n" "Scanning image for restore failed!"
+                exit 1
             fi
         fi
     else
