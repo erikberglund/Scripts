@@ -323,6 +323,11 @@ for osx_image in "${input_directory}"/*\.dmg; do
         error "Attaching: ${osx_image} failed"
     fi
     
+    # Remove temporary images created (GUID)
+    for guid_image in "${output_directory}"/*_GUID\.hfs\.dmg; do
+        rm -rf "${guid_image}"
+    done
+    
     # Remove temporary image mountpoint if still exists
     if [[ -f ${osx_image_mountpoint} ]]; then
         rm -rf "${osx_image_mountpoint}" || printf "%s\n" "Removing folder: ${osx_image_mountpoint} failed!" >&2
