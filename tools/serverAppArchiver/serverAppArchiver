@@ -104,6 +104,7 @@ usage() {
     printf "  %s\t%s\n" "-a" "(Optional) All server applications on computer (uses mdfind)"
     printf "  %s\t%s\n" "-i" "(Optional) Input directory"
     printf "  %s\t%s\n" "-o" "(Optional) Output directory"
+    printf "  %s\t%s\n" "-u" "(Optional) Upload to FTP"
     printf "\n"
 }
 
