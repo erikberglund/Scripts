@@ -8,11 +8,12 @@ The following snippets are used to extract hardware information from a running O
 * [Serial Number (Logic Board)](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#serial-number-logic-board)
 * [MAC Address](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#mac-address)
 * [MAC Address (Logic Board)](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#mac-address-logic-board)
+* [Battery Percent](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#battery-percent)
 * [Board ID](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#board-id)
 * [Model Identifier / Machine Model](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#model-identifier--machine-model)
 * [RAM Installed](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#ram-installed)
 * [Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#marketing-name)
-* [Virtual Machine]()
+* [Virtual Machine](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#virtual-machine)
 
 ## Snippets
 
@@ -60,6 +61,14 @@ nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print
 0CBC9F******
 ```
 
+#### Battery Percent
+
+Displays current battery charge percentage:
+
+```bash
+ioreg -rd1 -c AppleSmartBattery | awk '/MaxCapacity/ {max=$NF}; /CurrentCapacity/ {current=$NF} END{OFMT="%.2f%%"; print((100*current)/max)}'
+52,96%
+```
 
 #### Board ID
 
