@@ -73,6 +73,8 @@ ioreg -rd1 -c AppleSmartBattery | awk '/MaxCapacity/ {max=$NF}; /CurrentCapacity
 
 #### Display Inches
 
+Physical size in inches for the internal display
+
 ```python
 #!/usr/bin/python
  
@@ -95,13 +97,13 @@ for display in displays:
     # Divide size by 25.4 to get inches
     inch = round(sqrt(pow((size.height / 25.4), 2.0) + pow((size.width / 25.4), 2.0)),1)
 
-    print('Internal Display inch: ' + str(inch))
+    print('Internal Display Inches: ' + str(inch))
 ```
 
 Output:
 
 ```console
-Internal Display inch: 15.4
+Internal Display Inches: 15.4
 ```
 
 #### Board ID
