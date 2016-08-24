@@ -9,6 +9,7 @@ The following snippets are used to extract hardware information from a running O
 * [MAC Address](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#mac-address)
 * [MAC Address (Logic Board)](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#mac-address-logic-board)
 * [Battery Percent](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#battery-percent)
+* [Display Inches](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#display-inches)
 * [Board ID](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#board-id)
 * [Model Identifier / Machine Model](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#model-identifier--machine-model)
 * [RAM Installed](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#ram-installed)
@@ -68,6 +69,39 @@ Displays current battery charge percentage:
 ```bash
 ioreg -rd1 -c AppleSmartBattery | awk '/MaxCapacity/ {max=$NF}; /CurrentCapacity/ {current=$NF} END{OFMT="%.2f%%"; print((current/max) * 100)}'
 52,96%
+```
+
+#### Display Inches
+
+```python
+#!/usr/bin/python
+ 
+import Quartz
+from math import sqrt
+
+# Get online display data
+(online_err, displays, num_displays) = Quartz.CGGetOnlineDisplayList(2, None, None)
+
+# Loop through all online displays
+for display in displays:
+
+  # Make sure we use the built in display
+  if (Quartz.CGDisplayIsBuiltin(display)):
+
+    # Get size of display in mm (returns an NSSize)
+    size = Quartz.CGDisplayScreenSize(display)
+
+    # Calculate diagonal inches using square root of heigh^2 + width^2
+    # Divide size by 25.4 to get inches
+    inch = round(sqrt(pow((size.height / 25.4), 2.0) + pow((size.width / 25.4), 2.0)),1)
+
+    print('Internal Display inch: ' + str(inch))
+```
+
+Output:
+
+```console
+Internal Display inch: 15.4
 ```
 
 #### Board ID
