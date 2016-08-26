@@ -129,11 +129,13 @@ else:
 
 Example using the El Capitan installer InstallESD.dmg disk image:
 
+Output if mounted:
 ```console
-# Output if mounted
 Disk Image: InstallESD.dmg is mounted at: /Volumes/OS X Install ESD
+```
 
-# Output if NOT mounted
+Output if NOT mounted:
+```console
 Disk Image: InstallESD.dmg is NOT mounted
 ```
 
