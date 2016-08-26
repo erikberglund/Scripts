@@ -50,7 +50,7 @@ C0252******GF2C1H
 
 ### MAC Address
 
-MAC address for interface, ( using `en0` in the example )
+MAC address for interface ( using `en0` in the example )
 
 **BASH**
 ```bash
