@@ -13,6 +13,7 @@ disk_image="/Applications/Install OS X El Capitan.app/Contents/SharedSupport/Ins
 * [Format](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#format)
 * [Mountpoint](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#mountpoint)
 * [Recovery Partition](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#recovery-partition)
+* [Scanned](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#scanned)
 
 ## Snippets
 
@@ -21,9 +22,6 @@ disk_image="/Applications/Install OS X El Capitan.app/Contents/SharedSupport/Ins
 Returns the current format for disk image at path.
 
 ```bash
-# Path to the disk image
-disk_image=""
-
 # Return the format of the disk image
 disk_image_format=$( hdiutil imageinfo "${disk_image}" | awk '/Format:/ { print $NF }' )
 
@@ -66,9 +64,6 @@ Returns the mountpoint for disk image at path.
 
 **BASH**
 ```bash
-# Path to the disk image
-disk_image=""
-
 # Return the path (mountpoint) where the disk image is mounted
 disk_image_mountpoint=$( hdiutil info -plist | xpath "/plist/dict/key[.='images']/following-sibling::array/dict/key[.='image-path']/following-sibling::string[1][contains(., \"${disk_image}\")]/../key[.='system-entities']/following-sibling::array/dict/key[.='mount-point']/following-sibling::string/text()" 2>/dev/null )
 
@@ -138,12 +133,9 @@ Disk Image: InstallESD.dmg is NOT mounted
 
 ### Recovery Partition
 
-Check if the disk image have a recovery partition.
+Check if disk image have a recovery partition.
 
 ```bash
-# Path to the disk image
-disk_image=""
-
 if (( $( hdiutil pmap "${disk_image}" | awk '/Apple_Boot/ || /Recovery HD/ { print 1 }' ) )); then
     printf "%s\n" "Disk Image: ${disk_image##*/} have a recovery partition"
 else
@@ -163,4 +155,17 @@ Example using an OS X System disk image created using AutoDMG:
 ```bash
 # Output
 Disk Image: osx_10.11.5_15F34.hfs.dmg have a recovery partition
+```
+### Scanned
+
+Check if disk image have been scanned for restore.
+
+```bash
+disk_image_scanned=$( /usr/libexec/PlistBuddy -c "Print udif-ordered-chunks" /dev/stdin <<< $( hdiutil imageinfo "${disk_image}" -plist ) )
+
+if [[ ${disk_image_scanned} == true ]]; then
+    printf "%s\n" "Disk Image: ${disk_image##*/} is scanned for restore"
+else
+    printf "%s\n" "Disk Image: ${disk_image##*/} is NOT scanned for restore"
+fi
 ```
