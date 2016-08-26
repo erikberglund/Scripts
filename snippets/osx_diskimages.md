@@ -64,6 +64,7 @@ Format is any one of the following abbreviations:
 
 Returns the mountpoint for disk image at path.
 
+**BASH**
 ```bash
 # Path to the disk image
 disk_image=""
@@ -77,6 +78,52 @@ if [[ -n ${disk_image_mountpoint} ]] && [[ -d ${disk_image_mountpoint} ]]; then
 else
     printf "%s\n" "Disk Image: ${disk_image##*/} is NOT mounted"
 fi
+```
+
+**PYTHON**
+```python
+import os
+import plistlib
+import subprocess
+
+# Path to the disk image
+disk_image_path = '/Applications/Install OS X El Capitan.app/Contents/SharedSupport/InstallESD.dmg'
+
+def getDiskImageMountpoint(image_path):
+
+	# Get the plist representation for command hdiutil info
+	hdiutil_cmd = ['hdiutil', 'info', '-plist']
+	hdiutil_subprocess = subprocess.Popen(hdiutil_cmd, stdout=subprocess.PIPE)
+
+	# Read plist returned into variable
+	hdiutil_plist = plistlib.readPlist(hdiutil_subprocess.stdout)
+
+	# Loop through all images mounted
+	for image in hdiutil_plist['images']:
+
+		# Check if current 'image' is the one we're looking for
+		if not image['image-path'] == image_path:
+			continue
+
+		# Loop through all entries in the 'system-entities' array
+		for entity in image['system-entities']:
+
+			# Loop through all key-value pairs in entity dictionary
+			for key, value in entity.iteritems():
+
+				# If key 'mount-point' is found, set that as disk image mountpoint
+				if key == 'mount-point':
+					return value
+	return ''
+
+# Return the path (mountpoint) where the disk image is mounted
+disk_image_mountpoint = getDiskImageMountpoint(disk_image_path)
+
+# Check that a path was returned, and that it is a folder
+if disk_image_mountpoint and os.path.isdir(disk_image_mountpoint):
+	print('Disk Image: ' + os.path.basename(disk_image_path) + ' is mounted at: ' + disk_image_mountpoint)
+else:
+	print('Disk Image: ' + os.path.basename(disk_image_path) + ' is NOT mounted')
 ```
 
 Example using the El Capitan installer InstallESD.dmg disk image:
