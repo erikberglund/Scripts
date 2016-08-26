@@ -143,7 +143,7 @@ Returns the partition scheme for disk image at path.
 
 **BASH**
 ```bash
-# Return 'true' or 'false' depending on if the disk image have been scanned for restore
+# Return the partition scheme of the disk image
 # Using plist output
 disk_image_partition_scheme=$( /usr/libexec/PlistBuddy -c "Print partitions:partition-scheme" /dev/stdin <<< $( hdiutil imageinfo "${disk_image}" -plist ) )
 
