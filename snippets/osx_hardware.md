@@ -20,6 +20,8 @@ The following snippets are used to extract hardware information from a running O
 
 ### Serial Number (Computer)
 
+Serial number for the computer
+
 **BASH**
 ```bash
 ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{ print $(NF-1) }'
@@ -27,6 +29,8 @@ C02*****G8WP
 ```
 
 ### Serial Number (Logic Board)
+
+Serial number for the main logic board (MLB)
 
 **BASH**
 ```bash
@@ -36,7 +40,7 @@ C0252******GF2C1H
 
 ### MAC Address
 
-The MAC Address for an interface, in the example, `en0`
+MAC address for interface, ( using `en0` in the example )
 
 **BASH**
 ```bash
@@ -54,6 +58,8 @@ A45E60******
 
 ### MAC Address (Logic Board)
 
+MAC address for the main logic board (MLB)
+
 **BASH**
 ```bash
 nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print $NF }'
@@ -70,7 +76,7 @@ nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print
 
 ### Battery Percent
 
-Displays current battery charge percentage:
+Current battery charge percentage:
 
 **BASH**
 ```bash
@@ -80,7 +86,7 @@ ioreg -rd1 -c AppleSmartBattery | awk '/MaxCapacity/ {max=$NF}; /CurrentCapacity
 
 ### Display Inches
 
-Physical size in inches for the internal display
+Physical size (in inches) for the internal display
 
 **PYTHON**
 ```python
@@ -98,7 +104,7 @@ for display in displays:
   # Make sure we use the built in display
   if (Quartz.CGDisplayIsBuiltin(display)):
 
-    # Get size of display in mm (returns an NSSize)
+    # Get size of display in mm (returns an NSSize object)
     size = Quartz.CGDisplayScreenSize(display)
     
     # Divide size by 25.4 to get inches
@@ -116,6 +122,8 @@ Internal Display Inches: 15.4
 
 ### Board ID
 
+ID for the motherboard
+
 **BASH**
 ```bash
 ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/board-id/{ print $(NF-1) }'
@@ -124,6 +132,8 @@ Mac-06F11F11946D27C5
 
 ### Model Identifier / Machine Model
 
+Model Identifier / Machine Model for the computer
+
 **BASH**
 ```bash
 sysctl -n hw.model
@@ -131,6 +141,8 @@ MacBookPro11,5
 ```
 
 ### Laptop/Desktop
+
+Check if computer is laptop or desktop
 
 **BASH**
 ```bash
@@ -165,6 +177,8 @@ printf "%s\n" "${ram}"
 
 **NOTE! Requires an internet connection**
 
+Marketing name for computer
+
 **BASH**
 ```bash
 curl -s http://support-sp.apple.com/sp/product?cc=$( ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{ sn=$(NF-1); if (length(sn) == 12) count=3; else if (length(sn) == 11) count=2; print substr(sn, length(sn) - count, length(sn)) }' ) | xpath '/root/configCode/text()' 2>/dev/null
@@ -172,6 +186,8 @@ MacBook Pro (Retina, 15-inch, Mid 2015)
 ```
 
 ### Virtual Machine
+
+Check if system is running in a virtual machine
 
 **BASH**
 ```bash
