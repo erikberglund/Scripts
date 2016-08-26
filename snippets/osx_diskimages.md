@@ -24,7 +24,11 @@ Returns the current format for disk image at path.
 **BASH**
 ```bash
 # Return the format of the disk image
+# Using plist output
 disk_image_format=$( /usr/libexec/PlistBuddy -c "Print Format" /dev/stdin <<< $( hdiutil imageinfo "${disk_image}" -plist ) )
+
+# Using standard output
+# disk_image_format=$( hdiutil imageinfo "${disk_image}" | awk '/Format:/ { print $NF }' )
 
 # Print output
 printf "%s\n" "Disk Image: ${disk_image##*/} has format: ${disk_image_format}"
@@ -165,7 +169,11 @@ Check if disk image have been scanned for restore.
 **BASH**
 ```bash
 # Return 'true' or 'false' depending on if the disk image have been scanned for restore
+# Using plist output
 disk_image_scanned=$( /usr/libexec/PlistBuddy -c "Print udif-ordered-chunks" /dev/stdin <<< $( hdiutil imageinfo "${disk_image}" -plist ) )
+
+# Using standard output
+# disk_image_scanned=$( hdiutil imageinfo "${disk_image}" | awk '/udif-ordered-chunks/ { print $NF }' )
 
 if [[ ${disk_image_scanned} == true ]]; then
     printf "%s\n" "Disk Image: ${disk_image##*/} is scanned for restore"
