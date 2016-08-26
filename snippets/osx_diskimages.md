@@ -18,6 +18,19 @@ disk_image="/Applications/Install OS X El Capitan.app/Contents/SharedSupport/Ins
 
 ### Format
 
+Returns the current format for disk image at path.
+
+```bash
+# Path to the disk image
+disk_image=""
+
+# Return the format of the disk image
+disk_image_format=$( hdiutil imageinfo "${disk_image}" | awk '/Format:/ { print $NF }' )
+
+# Print output
+printf "%s\n" "Disk Image: ${disk_image##*/} has format: ${disk_image_format}"
+```
+
 Format is any one of the following abbreviations:
 
 | Format | Description           |
@@ -39,19 +52,6 @@ Format is any one of the following abbreviations:
 | ROCo   | NDIF compressed image (deprecated) |
 | Rken   | NDIF compressed (obsolete format) |
 | DC42   | Disk Copy 4.2 image (obsolete format) |
-
-Returns the current format for disk image at path.
-
-```bash
-# Path to the disk image
-disk_image=""
-
-# Return the format of the disk image
-disk_image_format=$( hdiutil imageinfo "${disk_image}" | awk '/Format:/ { print $NF }' )
-
-# Print output
-printf "%s\n" "Disk Image: ${disk_image##*/} has format: ${disk_image_format}"
-```
 
 Example using the El Capitan installer InstallESD.dmg disk image:
 
