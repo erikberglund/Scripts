@@ -10,7 +10,7 @@ The following snippets are used to extract os information from an OS X system.
 
 ## Snippets
 
-#### OS Version
+### OS Version
 
 On a running system you can use the `sw_vers` command to query the os version.
 
@@ -50,7 +50,7 @@ IFS='.' read -r major minor patch < <( /usr/bin/sw_vers -productVersion )
 # patch=5
 ```
 
-#### OS Build Version
+### OS Build Version
 
 On a running system you can use the `sw_vers` command to query the os build version.
 
@@ -78,7 +78,7 @@ Output:
 15F34
 ```
 
-#### OS Marketing Name
+### OS Marketing Name
 
 **NOTE! Requires an internet connection**
 
