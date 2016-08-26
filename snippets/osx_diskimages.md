@@ -21,6 +21,7 @@ disk_image="/Applications/Install OS X El Capitan.app/Contents/SharedSupport/Ins
 
 Returns the current format for disk image at path.
 
+**BASH**
 ```bash
 # Return the format of the disk image
 disk_image_format=$( /usr/libexec/PlistBuddy -c "Print Format" /dev/stdin <<< $( hdiutil imageinfo "${disk_image}" -plist ) )
@@ -135,6 +136,7 @@ Disk Image: InstallESD.dmg is NOT mounted
 
 Check if disk image have a recovery partition.
 
+**BASH**
 ```bash
 if (( $( hdiutil pmap "${disk_image}" | awk '/Apple_Boot/ || /Recovery HD/ { print 1 }' ) )); then
     printf "%s\n" "Disk Image: ${disk_image##*/} have a recovery partition"
@@ -160,6 +162,7 @@ Disk Image: osx_10.11.5_15F34.hfs.dmg have a recovery partition
 
 Check if disk image have been scanned for restore.
 
+**BASH**
 ```bash
 # Return 'true' or 'false' depending on if the disk image have been scanned for restore
 disk_image_scanned=$( /usr/libexec/PlistBuddy -c "Print udif-ordered-chunks" /dev/stdin <<< $( hdiutil imageinfo "${disk_image}" -plist ) )
