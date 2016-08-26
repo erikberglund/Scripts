@@ -161,6 +161,7 @@ Disk Image: osx_10.11.5_15F34.hfs.dmg have a recovery partition
 Check if disk image have been scanned for restore.
 
 ```bash
+# Return 'true' or 'false' depending on if the disk image have been scanned for restore
 disk_image_scanned=$( /usr/libexec/PlistBuddy -c "Print udif-ordered-chunks" /dev/stdin <<< $( hdiutil imageinfo "${disk_image}" -plist ) )
 
 if [[ ${disk_image_scanned} == true ]]; then
