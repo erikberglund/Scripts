@@ -100,9 +100,9 @@ for display in displays:
 
     # Get size of display in mm (returns an NSSize)
     size = Quartz.CGDisplayScreenSize(display)
-
-    # Calculate diagonal inches using square root of heigh^2 + width^2
+    
     # Divide size by 25.4 to get inches
+    # Calculate diagonal inches using square root of heigh^2 + width^2
     inch = round(sqrt(pow((size.height / 25.4), 2.0) + pow((size.width / 25.4), 2.0)),1)
 
     print('Internal Display Inches: ' + str(inch))
