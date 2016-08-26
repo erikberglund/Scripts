@@ -25,6 +25,11 @@ Serial number for the computer
 **BASH**
 ```bash
 ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{ print $(NF-1) }'
+```
+
+Output:
+
+```console
 C02*****G8WP
 ```
 
@@ -35,6 +40,11 @@ Serial number for the main logic board (MLB)
 **BASH**
 ```bash
 nvram 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:MLB | awk '{ print $NF }'
+```
+
+Output:
+
+```console
 C0252******GF2C1H
 ```
 
@@ -45,6 +55,11 @@ MAC address for interface, ( using `en0` in the example )
 **BASH**
 ```bash
 ifconfig en0 | awk '/ether/{ gsub(":",""); print $2 }'
+```
+
+Output:
+
+```console
 a45e60******
 ```
 
@@ -53,6 +68,11 @@ Uppercase output:
 **BASH**
 ```bash
 ifconfig en0 | awk '/ether/{ gsub(":",""); print toupper($2) }'
+```
+
+Output:
+
+```console
 A45E60******
 ```
 
@@ -63,6 +83,11 @@ MAC address for the main logic board (MLB)
 **BASH**
 ```bash
 nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print $NF }'
+```
+
+Output:
+
+```console
 0cbc9f******
 ```
 
@@ -71,6 +96,11 @@ Uppercase output:
 **BASH**
 ```bash
 nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print toupper($NF) }'
+```
+
+Output:
+
+```console
 0CBC9F******
 ```
 
@@ -81,6 +111,11 @@ Current battery charge percentage:
 **BASH**
 ```bash
 ioreg -rd1 -c AppleSmartBattery | awk '/MaxCapacity/ {max=$NF}; /CurrentCapacity/ {current=$NF} END{OFMT="%.2f%%"; print((current/max) * 100)}'
+```
+
+Output:
+
+```console
 52,96%
 ```
 
@@ -127,6 +162,11 @@ ID for the motherboard
 **BASH**
 ```bash
 ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/board-id/{ print $(NF-1) }'
+```
+
+Output:
+
+```console
 Mac-06F11F11946D27C5
 ```
 
@@ -137,6 +177,11 @@ Model Identifier / Machine Model for the computer
 **BASH**
 ```bash
 sysctl -n hw.model
+```
+
+Output:
+
+```console
 MacBookPro11,5
 ```
 
@@ -153,14 +198,28 @@ else
 fi
 ```
 
+Output:
+
+```console
+Laptop
+```
+
 ### RAM Installed
 
 RAM installed (in GB without unit)
 
 **BASH**
 ```bash
-ram=$(( $( sysctl -n hw.memsize ) >> 30 ))
-printf "%s\n" "${ram}"
+# Get RAM installed in GB
+ram_gb=$(( $( sysctl -n hw.memsize ) >> 30 ))
+
+# Print value to stdout
+printf "%s\n" "${ram_gb}"
+```
+
+Output:
+
+```console
 16
 ```
 
@@ -168,8 +227,16 @@ RAM installed (in MB without unit)
 
 **BASH**
 ```bash
-ram=$(( $( sysctl -n hw.memsize ) >> 20 ))
-printf "%s\n" "${ram}"
+# Get RAM installed in MB
+ram_mb=$(( $( sysctl -n hw.memsize ) >> 20 ))
+
+# Print value to stdout
+printf "%s\n" "${ram_mb}"
+```
+
+Output:
+
+```console
 16384
 ```
 
@@ -182,6 +249,11 @@ Marketing name for computer
 **BASH**
 ```bash
 curl -s http://support-sp.apple.com/sp/product?cc=$( ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{ sn=$(NF-1); if (length(sn) == 12) count=3; else if (length(sn) == 11) count=2; print substr(sn, length(sn) - count, length(sn)) }' ) | xpath '/root/configCode/text()' 2>/dev/null
+```
+
+Output:
+
+```console
 MacBook Pro (Retina, 15-inch, Mid 2015)
 ```
 
@@ -196,4 +268,10 @@ if sysctl -n machdep.cpu.features | grep -q "VMM"; then
 else
 	printf "%s" "Not VM"	
 fi
+```
+
+Output:
+
+```console
+Not VM
 ```
