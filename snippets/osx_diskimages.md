@@ -23,7 +23,7 @@ Returns the current format for disk image at path.
 
 ```bash
 # Return the format of the disk image
-disk_image_format=$( hdiutil imageinfo "${disk_image}" | awk '/Format:/ { print $NF }' )
+disk_image_format=$( /usr/libexec/PlistBuddy -c "Print Format" /dev/stdin <<< $( hdiutil imageinfo "${disk_image}" -plist ) )
 
 # Print output
 printf "%s\n" "Disk Image: ${disk_image##*/} has format: ${disk_image_format}"
