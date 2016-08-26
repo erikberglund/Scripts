@@ -18,24 +18,27 @@ The following snippets are used to extract hardware information from a running O
 
 ## Snippets
 
-#### Serial Number (Computer)
+### Serial Number (Computer)
 
+**BASH**
 ```bash
 ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{ print $(NF-1) }'
 C02*****G8WP
 ```
 
-#### Serial Number (Logic Board)
+### Serial Number (Logic Board)
 
+**BASH**
 ```bash
 nvram 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:MLB | awk '{ print $NF }'
 C0252******GF2C1H
 ```
 
-#### MAC Address
+### MAC Address
 
 The MAC Address for an interface, in the example, `en0`
 
+**BASH**
 ```bash
 ifconfig en0 | awk '/ether/{ gsub(":",""); print $2 }'
 a45e60******
@@ -43,13 +46,15 @@ a45e60******
 
 Uppercase output:
 
+**BASH**
 ```bash
 ifconfig en0 | awk '/ether/{ gsub(":",""); print toupper($2) }'
 A45E60******
 ```
 
-#### MAC Address (Logic Board)
+### MAC Address (Logic Board)
 
+**BASH**
 ```bash
 nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print $NF }'
 0cbc9f******
@@ -57,24 +62,27 @@ nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print
 
 Uppercase output:
 
+**BASH**
 ```bash
 nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print toupper($NF) }'
 0CBC9F******
 ```
 
-#### Battery Percent
+### Battery Percent
 
 Displays current battery charge percentage:
 
+**BASH**
 ```bash
 ioreg -rd1 -c AppleSmartBattery | awk '/MaxCapacity/ {max=$NF}; /CurrentCapacity/ {current=$NF} END{OFMT="%.2f%%"; print((current/max) * 100)}'
 52,96%
 ```
 
-#### Display Inches
+### Display Inches
 
 Physical size in inches for the internal display
 
+**PYTHON**
 ```python
 #!/usr/bin/python
  
@@ -106,22 +114,25 @@ Output:
 Internal Display Inches: 15.4
 ```
 
-#### Board ID
+### Board ID
 
+**BASH**
 ```bash
 ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/board-id/{ print $(NF-1) }'
 Mac-06F11F11946D27C5
 ```
 
-#### Model Identifier / Machine Model
+### Model Identifier / Machine Model
 
+**BASH**
 ```bash
 sysctl -n hw.model
 MacBookPro11,5
 ```
 
-#### Laptop/Desktop
+### Laptop/Desktop
 
+**BASH**
 ```bash
 if [[ $( sysctl -n hw.model ) =~ [Bb]ook ]]; then
 	printf "%s" "Laptop"
@@ -130,10 +141,11 @@ else
 fi
 ```
 
-#### RAM Installed
+### RAM Installed
 
 RAM installed (in GB without unit)
 
+**BASH**
 ```bash
 ram=$(( $( sysctl -n hw.memsize ) >> 30 ))
 printf "%s\n" "${ram}"
@@ -142,23 +154,26 @@ printf "%s\n" "${ram}"
 
 RAM installed (in MB without unit)
 
+**BASH**
 ```bash
 ram=$(( $( sysctl -n hw.memsize ) >> 20 ))
 printf "%s\n" "${ram}"
 16384
 ```
 
-#### Marketing Name
+### Marketing Name
 
 **NOTE! Requires an internet connection**
 
+**BASH**
 ```bash
 curl -s http://support-sp.apple.com/sp/product?cc=$( ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{ sn=$(NF-1); if (length(sn) == 12) count=3; else if (length(sn) == 11) count=2; print substr(sn, length(sn) - count, length(sn)) }' ) | xpath '/root/configCode/text()' 2>/dev/null
 MacBook Pro (Retina, 15-inch, Mid 2015)
 ```
 
-#### Virtual Machine
+### Virtual Machine
 
+**BASH**
 ```bash
 if sysctl -n machdep.cpu.features | grep -q "VMM"; then
 	printf "%s" "VM"
