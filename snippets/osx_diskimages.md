@@ -12,6 +12,7 @@ disk_image="/Applications/Install OS X El Capitan.app/Contents/SharedSupport/Ins
 
 * [Format](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#format)
 * [Mountpoint](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#mountpoint)
+* [Partition Scheme](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#partition-scheme)
 * [Recovery Partition](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#recovery-partition)
 * [Scanned](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#scanned)
 
@@ -134,6 +135,29 @@ Disk Image: InstallESD.dmg is mounted at: /Volumes/OS X Install ESD
 
 # Output if NOT mounted
 Disk Image: InstallESD.dmg is NOT mounted
+```
+
+### Partition Scheme
+
+Returns the partition scheme for disk image at path.
+
+**BASH**
+```bash
+# Return 'true' or 'false' depending on if the disk image have been scanned for restore
+# Using plist output
+disk_image_partition_scheme=$( /usr/libexec/PlistBuddy -c "Print partitions:partition-scheme" /dev/stdin <<< $( hdiutil imageinfo "${disk_image}" -plist ) )
+
+# Using standard output
+# disk_image_partition_scheme=$( hdiutil imageinfo "${disk_image}" | awk '/partition-scheme:/ { print $NF }' )
+
+# Print output
+printf "%s\n" "Disk Image: ${disk_image##*/} has partition scheme: ${disk_image_partition_scheme}"
+```
+
+Output:
+
+```console
+GUID
 ```
 
 ### Recovery Partition
