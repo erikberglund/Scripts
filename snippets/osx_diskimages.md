@@ -91,7 +91,7 @@ disk_image_path = '/Applications/Install OS X El Capitan.app/Contents/SharedSupp
 
 def getDiskImageMountpoint(image_path):
 
-	# Get the plist representation for command hdiutil info
+	# Run command 'hdiutil info -plist'
 	hdiutil_cmd = ['hdiutil', 'info', '-plist']
 	hdiutil_subprocess = subprocess.Popen(hdiutil_cmd, stdout=subprocess.PIPE)
 
