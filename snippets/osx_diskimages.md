@@ -31,6 +31,13 @@ disk_image_format=$( hdiutil imageinfo "${disk_image}" | awk '/Format:/ { print 
 printf "%s\n" "Disk Image: ${disk_image##*/} has format: ${disk_image_format}"
 ```
 
+Example using the El Capitan installer InstallESD.dmg disk image:
+
+```
+# Output
+Disk Image: InstallESD.dmg has format: UDZO
+```
+
 Format is any one of the following abbreviations:
 
 | Format | Description           |
@@ -52,13 +59,6 @@ Format is any one of the following abbreviations:
 | ROCo   | NDIF compressed image (deprecated) |
 | Rken   | NDIF compressed (obsolete format) |
 | DC42   | Disk Copy 4.2 image (obsolete format) |
-
-Example using the El Capitan installer InstallESD.dmg disk image:
-
-```
-# Output
-Disk Image: InstallESD.dmg has format: UDZO
-```
 
 ### Mountpoint
 
