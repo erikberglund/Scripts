@@ -129,7 +129,7 @@ else:
 
 Example using the El Capitan installer InstallESD.dmg disk image:
 
-```bash
+```console
 # Output if mounted
 Disk Image: InstallESD.dmg is mounted at: /Volumes/OS X Install ESD
 
@@ -157,7 +157,7 @@ printf "%s\n" "Disk Image: ${disk_image##*/} has partition scheme: ${disk_image_
 Output:
 
 ```console
-GUID
+Disk Image: InstallESD.dmg has partition scheme: GUID
 ```
 
 ### Recovery Partition
@@ -173,17 +173,15 @@ else
 fi
 ```
 
-Example using the El Capitan installer InstallESD.dmg disk image:
+Output using the El Capitan installer InstallESD.dmg disk image:
 
-```bash
-# Output
+```console
 Disk Image: InstallESD.dmg does NOT have a recovery partition
 ```
 
-Example using an OS X System disk image created using AutoDMG:
+Output using an OS X System disk image created using AutoDMG:
 
-```bash
-# Output
+```console
 Disk Image: osx_10.11.5_15F34.hfs.dmg have a recovery partition
 ```
 ### Scanned
