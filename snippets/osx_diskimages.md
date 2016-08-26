@@ -105,13 +105,13 @@ def getDiskImageMountpoint(image_path):
 		if not image['image-path'] == image_path:
 			continue
 
-		# Loop through all entries in the 'system-entities' array
+		# Loop through all entries in the image 'system-entities' array
 		for entity in image['system-entities']:
 
 			# Loop through all key-value pairs in entity dictionary
 			for key, value in entity.iteritems():
 
-				# If key 'mount-point' is found, set that as disk image mountpoint
+				# If key 'mount-point' is found, return that value as disk image mountpoint
 				if key == 'mount-point':
 					return value
 	return ''
