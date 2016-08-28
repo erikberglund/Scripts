@@ -217,7 +217,7 @@ for osx_image in "${input_directory}"/*\.dmg; do
             fi
             
             # Verify the recovery source image have a recovery partition
-            # FIXME - This requires that no volume is mounted, possibly check for that or use diskutil if mounted
+            # FIXME - This requires that no volume from 'recovery_image' is mounted, possibly check for that or use diskutil if mounted
             if ! (( $( hdiutil pmap "${recovery_image}" | awk '/Apple_Boot/ || /Recovery HD/ { print 1 }' ) )); then
                 printf "%s\n" "Source disk image: ${recovery_image##*/} have NO recovery partition!" >&2
             fi
