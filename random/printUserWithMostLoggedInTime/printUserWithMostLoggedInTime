@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+### Version 1.0.0
+### Created by Erik Berglund
+### https://github.com/erikberglund
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### DESCRIPTION
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# This is from a discussion on macadmins.slack.com where @sohail posted a scrip that I got the wrong output for.
+# The error was because of my locale setting in my bash environment. 
+# To fix that I wrote this snippet to simplify the original script, and to convert the floating point numbers to integers 
+# to avoid the error I got from the floating point arithmetic. (It was the wrong decimal character in my locale)
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### MAIN SCRIPT
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# NOTE - This convert's the time output from ac to rounded integers, which might case some erroneous results.
+#        But the reason is to avoid a floating point math error discovered for my locale.
+
+# Print user with most accumulated connect time (logged-in)
+/usr/sbin/ac -p | /usr/bin/awk '/total/ {next}; {if (int($NF) > max) {max = int($NF); user=$1}} END{print user}'
+
+# Print user with most accumulated connect time (logged-in) inside a <result>VALUE</result> block for use in Casper Suite extension attribute
+#/usr/sbin/ac -p | /usr/bin/awk '/total/ {next}; {if (int($NF) > max) {max = int($NF); user=$1}} END{print "<result>"user"</result>"}'
+
+exit 0
