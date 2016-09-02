@@ -13,6 +13,7 @@ disk_image="/Applications/Install OS X El Capitan.app/Contents/SharedSupport/Ins
 * [Format](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#format)
 * [Mountpoint](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#mountpoint)
 * [Partition Scheme](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#partition-scheme)
+* [Partition Size](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#partition-size)
 * [Recovery Partition](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#recovery-partition)
 * [Scanned](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#scanned)
 
@@ -154,6 +155,28 @@ disk_image_partition_scheme=$( /usr/libexec/PlistBuddy -c "Print partitions:part
 
 # Print output
 printf "%s\n" "Disk Image: ${disk_image##*/} has partition scheme: ${disk_image_partition_scheme}"
+```
+
+Output:
+
+```console
+Disk Image: InstallESD.dmg has partition scheme: GUID
+```
+
+### Partition Size
+
+Check the block size of a partition.
+
+**BASH**
+```bash
+# Return the partition size for the partition name in 'partition_name' of the disk image
+# Using plist output
+partition_name="Recovery HD"
+disk_image_partition_size=$( hdiutil imageinfo -plist | xpath "/plist/dict/key[.='partitions']/following-sibling::*[1]/key[.='partitions']/following-sibling::array/dict/key[.='partition-name']/following-sibling::string[1][contains(., \"Recovery HD\")]/../key[.='partition-length']/following-sibling::integer[1]/text()" 2>/dev/null )
+
+# Print output
+printf "%s\n" "Partition named: "${partition_name}" has current block size: "${disk_image_partition_size}"
+printf "%s\n" "Partition named: "${partition_name}" has current byte size: $(("${disk_image_partition_size}"*512))
 ```
 
 Output:
