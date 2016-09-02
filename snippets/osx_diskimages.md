@@ -181,10 +181,11 @@ printf "%s\n" "Partition named: ${partition_name} has current block size: ${disk
 printf "%s\n" "Partition named: ${partition_name} has current byte size: $((${disk_image_partition_size}*512))"
 ```
 
-Output:
+Output using an OS X System disk image created using AutoDMG:
 
 ```console
-Disk Image: InstallESD.dmg has partition scheme: GUID
+Partition named: Recovery HD has current block size: 1269536
+Partition named: Recovery HD has current byte size: 650002432
 ```
 
 ### Recovery Partition
