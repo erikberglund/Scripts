@@ -177,8 +177,8 @@ partition_name="Recovery HD"
 disk_image_partition_size=$( hdiutil imageinfo "${disk_image}" -plist | xpath "/plist/dict/key[.='partitions']/following-sibling::*[1]/key[.='partitions']/following-sibling::array/dict/key[.='partition-name']/following-sibling::string[1][contains(., \"Recovery HD\")]/../key[.='partition-length']/following-sibling::integer[1]/text()" 2>/dev/null )
 
 # Print output
-printf "%s\n" "Partition named: "${partition_name}" has current block size: "${disk_image_partition_size}"
-printf "%s\n" "Partition named: "${partition_name}" has current byte size: $(("${disk_image_partition_size}"*512))
+printf "%s\n" "Partition named: ${partition_name} has current block size: ${disk_image_partition_size}"
+printf "%s\n" "Partition named: ${partition_name} has current byte size: $((${disk_image_partition_size}*512))"
 ```
 
 Output:
