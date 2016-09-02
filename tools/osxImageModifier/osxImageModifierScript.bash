@@ -11,6 +11,10 @@
 # If any modification was done, remember to set the variable osx_image_modified to True
 # Else the script won't write the updated image to output folder.
 
+# Input Variables
+#osx_image - Path to the disk image to modify
+#osx_image_mountpoint - Path to the disk image mountpoint
+
 # Static Variables
 #osx_image_add_recovery="False|True"
 #osx_image_modified="False|True"
@@ -66,8 +70,36 @@ else
 fi
 
 #
+# Check if image has a recovery partition
+#
+if (( $( hdiutil pmap "${osx_image}" | awk '/Apple_Boot/ || /Recovery HD/ { print 1 }' ) )); then
+    osx_image_has_recovery='YES'
+else
+    osx_image_has_recovery='NO'
+    osx_image_add_recovery='True'
+    
+    # ****** IMPORTANT ****** 
+    # Set this variable to a path with a disk image containing a recovery partition you would like to add to the current disk image.
+    # ***********************
+    recovery_image=""
+fi
+printf "%s\n" "Has Recovery: ${osx_image_has_recovery}"
+
+#
+# Check if image is imagescanned
+#
+udif_ordered_chunks=$( /usr/libexec/PlistBuddy -c "Print udif-ordered-chunks" /dev/stdin <<< $( hdiutil imageinfo "${osx_image}" -plist ) )
+if [[ ${udif_ordered_chunks} != true ]]; then
+    osx_image_scan='True'
+    printf "%s\n" "Image have NOT been imagescanned!"
+else
+    printf "%s\n" "Image is already imagescanned!"
+fi
+
+#
 # Remove user(s)
 #
+<<COMMENT
 user_list=( "testuser" )
 image_node_path="${osx_image_mountpoint}/var/db/dslocal/nodes/Default"
 for user in "${user_list[@]}"; do
@@ -95,29 +127,7 @@ for user in "${user_list[@]}"; do
         printf "%s\n" "User ${user} does NOT exist!"
     fi
 done
-
-#
-# Check if image has a recovery partition
-#
-if (( $( hdiutil pmap "${osx_image}" | awk '/Apple_Boot/ || /Recovery HD/ { print 1 }' ) )); then
-    osx_image_has_recovery='YES'
-else
-    osx_image_has_recovery='NO'
-    osx_image_add_recovery='True'
-    recovery_image=""
-fi
-printf "%s\n" "Has Recovery: ${osx_image_has_recovery}"
-
-#
-# Check if image is imagescanned
-#
-udif_ordered_chunks=$( /usr/libexec/PlistBuddy -c "Print udif-ordered-chunks" /dev/stdin <<< $( hdiutil imageinfo /Users/erikberglund/Desktop/Ominstallation_1.0.dmg -plist ) )
-if [[ ${udif_ordered_chunks} != true ]]; then
-    osx_image_scan='True'
-    printf "%s\n" "Image have NOT been imagescanned!"
-else
-    printf "%s\n" "Image is already imagescanned!"
-fi
+COMMENT
 
 #
 # Check version of Application
