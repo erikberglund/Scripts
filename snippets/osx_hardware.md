@@ -8,7 +8,7 @@ The following snippets are used to extract hardware information from a running O
 * [Serial Number (Logic Board)](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#serial-number-logic-board)
 * [MAC Address](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#mac-address)
 * [MAC Address (Logic Board)](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#mac-address-logic-board)
-* [Battery Percent](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#battery-percent)
+* [Battery Percentage](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#battery-percentage)
 * [Display Inches](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#display-inches)
 * [Board ID](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#board-id)
 * [Model Identifier / Machine Model](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#model-identifier--machine-model)
@@ -104,7 +104,7 @@ Output:
 0CBC9F******
 ```
 
-### Battery Percent
+### Battery Percentage
 
 Current battery charge percentage:
 
