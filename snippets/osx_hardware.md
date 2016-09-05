@@ -24,7 +24,7 @@ Serial number for the computer
 
 **BASH**
 ```bash
-ioreg -d2 -c IOPlatformExpertDevice | awk -F\" '/IOPlatformSerialNumber/{ print $(NF-1) }'
+ioreg -d2 -c IOPlatformExpertDevice | awk -F\" '/IOPlatformSerialNumber/ { print $(NF-1) }'
 ```
 
 Output:
