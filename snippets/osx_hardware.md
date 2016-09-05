@@ -24,7 +24,7 @@ Serial number for the computer
 
 **BASH**
 ```bash
-ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{ print $(NF-1) }'
+ioreg -d2 -c IOPlatformExpertDevice | awk -F\" '/IOPlatformSerialNumber/{ print $(NF-1) }'
 ```
 
 Output:
@@ -161,7 +161,7 @@ ID for the motherboard
 
 **BASH**
 ```bash
-ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/board-id/{ print $(NF-1) }'
+ioreg -d2 -c IOPlatformExpertDevice | awk -F\" '/board-id/{ print $(NF-1) }'
 ```
 
 Output:
