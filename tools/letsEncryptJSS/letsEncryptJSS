@@ -1,0 +1,238 @@
+#!/bin/bash
+
+### Version 1.0.0
+### Created by Erik Berglund
+### https://github.com/erikberglund
+
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### VARIABLES
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+#
+# CHANGE THESE VARIABLES
+#
+
+# E-mail address for the certificate CA
+sslEmail=""
+
+# Domain for the certificate
+sslDomain=""
+
+# Password for Tomcat keystore
+tomcatKeystorePassword=""
+
+#
+# Let's Encrypt Variables
+#
+
+# Path to Let's Encrypt client script
+letsEncrypt="/usr/local/sbin/certbot-auto"
+
+# Path to Let's Encrypt certificates
+letsEncryptCertificatesPath="/etc/letsencrypt/live"
+
+#
+# Tomcat Variables
+#
+
+# Path to Tomcat installation
+tomcatPath="/usr/local/jss/tomcat"
+
+# Path to Tomcat configuration
+tomcatConfigPath="${tomcatPath}/conf/server.xml"
+
+# Path to Tomcat keystore
+tomcatKeystorePath="${tomcatPath}/keystore"
+
+# Unallowed characters for Tomcat keystore password 
+# (precaution to not make errors when escaping it when passed to sed for insertion in server config)
+tomcatKeystorePasswordUnallowedCharacters="/"
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### FUNCIONS
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+verifyVariables() {
+    
+    if [[ -z ${sslEmail} ]]; then
+        printf "%s\n" "Variable 'sslEmail' cannot be empty" >&2
+        exit 1
+    fi
+
+    if [[ -z ${sslDomain} ]]; then
+        printf "%s\n" "Variable 'sslDomain' cannot be empty" >&2
+        exit 1
+    fi
+
+    if [[ -z ${tomcatKeystorePassword} ]]; then
+        printf "%s\n" "Variable 'tomcatKeystorePassword' cannot be empty" >&2
+        exit 1
+    elif [[ ${tomcatKeystorePassword} =~ ${tomcatKeystorePasswordUnallowedCharacters} ]]; then
+        printf "%s\n" "Variable 'tomcatKeystorePassword' cannot contain the following characters: ${tomcatKeystorePasswordUnallowedCharacters}" >&2
+        exit 1
+    fi
+}
+
+# Install Let's Encrypt
+installLetsEncrypt () {
+        
+    # Download Let's Encrypt client
+    sudo curl -o "${letsEncrypt}" https://dl.eff.org/certbot-auto
+    
+    # Verify the Let's Encrypt client was downloaded
+    if ! [[ -f ${letsEncrypt} ]]; then
+        printf "%s\n" "${letsEncrypt}: No such file" >&2
+        exit 1
+    fi
+    
+    # Correct permissions on Let's Encrypt client
+    sudo chmod a+x "${letsEncrypt}"
+    
+    # Verify the Let's Encrypt client is executable
+    if ! [[ -x ${letsEncrypt} ]]; then
+        printf "%s\n" "${letsEncrypt} needs to be executable!" >&2
+        exit 1
+    fi
+    
+    # Run inital setup
+    sudo "${letsEncrypt}" -n -h
+    
+    # Stop Tomcat
+    if ! sudo /etc/init.d/jamf.tomcat8 stop; then
+        printf "%s\n" "Stopping tomcat failed!" >&2
+        exit 1
+    fi
+    
+    # Generate initial certificate files
+    sudo -H "${letsEncrypt}" certonly --standalone -m "${sslEmail}" -d "${sslDomain}" --agree-tos
+    
+    # Replace Tomcat keystore with new certificate
+    replaceKeystoreWithCertificate
+    
+    # Start Tomcat
+    sudo /etc/init.d/jamf.tomcat8 start
+}
+
+renewCertificate () {
+
+    # Stop Tomcat
+    if ! sudo /etc/init.d/jamf.tomcat8 stop; then
+        printf "%s\n" "Stopping tomcat failed!" >&2
+        exit 1
+    fi
+    
+    # Renew certificate files (if they are eligeble)
+    sudo -H "${letsEncrypt}" renew --quiet --no-self-upgrade
+    
+    # Replace Tomcat keystore with new certificate
+    replaceKeystoreWithCertificate
+    
+    # Start Tomcat
+    sudo /etc/init.d/jamf.tomcat8 start
+}
+
+replaceKeystoreWithCertificate () {
+
+    # Remove current keystore
+    if [[ -f ${tomcatKeystorePath}/keystore.jks ]]; then
+        rm "${tomcatKeystorePath}/keystore.jks"
+    fi
+    
+    # Create keystore path if it doesn't exist
+    if ! [[ -d ${tomcatKeystorePath} ]]; then
+        mkdir "${tomcatKeystorePath}"
+        chown "jamftomcat:jamftomcat" "${tomcatKeystorePath}"
+        chmod 755 "${tomcatKeystorePath}"
+    fi
+    
+    # Combine Let's Encrypt certificate files into PKCS12
+    openssl pkcs12 \
+        -export \
+            -in "${letsEncryptCertificatesPath}/${sslDomain}/fullchain.pem" \
+                -inkey "${letsEncryptCertificatesPath}/${sslDomain}/privkey.pem" \
+                    -out "${tomcatKeystorePath}/${sslDomain}.p12" \
+                        -password pass:"${tomcatKeystorePassword}" \
+                            -name tomcat
+
+    # Convert PKCS12 into java keystore
+    keytool -importkeystore \
+        -deststorepass "${tomcatKeystorePassword}" \
+            -destkeypass "${tomcatKeystorePassword}" \
+                -destkeystore "${tomcatKeystorePath}/keystore.jks" \
+                    -srckeystore "${tomcatKeystorePath}/${sslDomain}.p12" \
+                        -srcstoretype PKCS12 \
+                            -srcstorepass "${tomcatKeystorePassword}" \
+                                -alias tomcat
+    
+    # Remove temporary PKCS12 file
+    rm "${tomcatKeystorePath}/${sslDomain}.p12"
+    
+    # Update Tomcat config to match keystore path and password
+    updateTomcatKeystoreConfig
+}
+
+updateTomcatKeystoreConfig () {
+    
+    # Backup current configuration
+    tomcatConfigBackupPath="${tomcatConfigPath%.*}-$( date +%F:%H:%M:%S ).xml"
+    cp "${tomcatConfigPath}" "${tomcatConfigBackupPath}"
+    
+    if [[ -f ${tomcatConfigBackupPath} ]]; then
+        
+        # Update keystore path (use ; as delimiter as the path contains slashes)
+        sed -i'' -r "s;keystoreFile=\".*\"( .*?|>);keystoreFile=\"${tomcatKeystorePath}/keystore.jks\"\1;" "${tomcatConfigPath}"
+        
+        # Update keystore password
+        if grep "keystorePass=\"" "${tomcatConfigPath}"; then
+            sed -i'' -r "s/keystorePass=\".*\"( .*?|>)/keystorePass=\"${tomcatKeystorePassword}\"\1/" "${tomcatConfigPath}"
+        else
+            sed -i'' -r "s/^(.*keystoreFile.*)( \/>)/\1 keystorePass=\"${tomcatKeystorePassword}\"\2/" "${tomcatConfigPath}"
+        fi
+        
+        # Update or set keyalias variable
+        if grep "keyAlias=\"" "${tomcatConfigPath}"; then
+            sed -i'' -r "s/keyAlias=\".*\"( .*?|>)/keyAlias=\"tomcat\"\1/" "${tomcatConfigPath}"
+        else
+            sed -i'' -r "s/^(.*keystoreFile.*)( \/>)/\1 keyAlias=\"tomcat\"\2/" "${tomcatConfigPath}"
+        fi
+        
+        # Remove backup if nothing has changed (to avoid lot's of duplicate copies)
+        if cmp --silent "${tomcatConfigPath}" "${tomcatConfigBackupPath}"; then
+            printf "%s\n" "Backup is equal to current config, removing unneccesary backup!" >&2
+            rm "${tomcatConfigBackupPath}"
+        fi
+    else
+        printf "%s\n" "Backup Tomcat server config failed!" >&2
+        printf "%s\n" "No modifications made!" >&2
+    fi
+}
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+###
+### MAIN SCRIPT
+###
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+
+# Make sure the script is running on the required platform
+if ! [[ $( lsb_release -s -d 2>&1 ) =~ ^'Ubuntu 14.04' ]]; then
+    printf "%s\n" "This script requires Ubutnu 14.04" >&2
+    exit 1
+fi
+
+# Make sure all required variables are present and valid
+verifyVariables
+
+# Install Let's Encrypt if not already installed
+if ! [[ -f "${letsEncrypt}" ]]; then
+    installLetsEncrypt
+else
+    # Renew Let's Encrypt certificate (if it's eligeble)
+    renewCertificate
+fi
+
+exit 0
