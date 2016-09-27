@@ -82,6 +82,11 @@ else
     # Set this variable to a path with a disk image containing a recovery partition you would like to add to the current disk image.
     # ***********************
     recovery_image=""
+    if [[ -z ${recovery_image} ]]; then
+        printf "%s\n" "**** ERROR ****"
+        printf "%s\n" "No path was defined for a disk image containing the recovery partition you want to add"
+        exit 1
+    fi
 fi
 printf "%s\n" "Has Recovery: ${osx_image_has_recovery}"
 

@@ -134,8 +134,8 @@ for osx_image in "${input_directory}"/*\.dmg; do
         mountpoints+=( "${osx_image_mountpoint}" )
         
         # Verify SystemVersion.plist exists
-        systemversion_path="${base_system_mountpoint}/System/Library/CoreServices/SystemVersion.plist"
-        if [[ -f ${systemversion_path} ]]; then
+        systemversion_path="${osx_image_mountpoint}/System/Library/CoreServices/SystemVersion.plist"
+        if [[ -d ${osx_image_mountpoint} ]] && [[ -f ${systemversion_path} ]]; then
             
             # Get os build and version
             os_version=$( /usr/libexec/PlistBuddy -c "Print :ProductUserVisibleVersion" "${systemversion_path}" )
@@ -183,13 +183,21 @@ for osx_image in "${input_directory}"/*\.dmg; do
             printf "%s\n" "Recreating image to use GUID partition scheme..."
                         
             # Update values for osx_image as this will be the new target from here on
-            osx_image="$( dirname "${osx_image_output_path}" )/$( sed -E 's/(\.hfs\.dmg|\.dmg)/_GUID.hfs.dmg/' <<< ${osx_image_output_name} )"
-            
-            # Add 1GB (2097152 512-byte sectors) to allow adding a recovery partiton
-            if ! hdiutil create -srcfolder "${osx_image_mountpoint}" -sectors $((${osx_image_size_used}+2097152)) -volname "Macintosh HD" -format UDRW -layout GPTSPUD "${osx_image}" ; then
+            osx_image="$( dirname "${osx_image_output_path}" )/$( sed -E 's/(\.hfs\.dmg|\.dmg)/_GUID.hfs.sparsebundle/' <<< ${osx_image_output_name} )"
+                        
+            # Add the size of a recovery partition (or if that's missing, 1GB (2097152 512-byte sectors)) to allow adding a recovery partiton
+            if ! hdiutil create -srcfolder "${osx_image_mountpoint}" -sectors $((${osx_image_size_used}+2097152)) -volname "Macintosh HD" -format UDSB -layout GPTSPUD "${osx_image}" ; then
                 printf "%s\n" "Recreating image mounted at: ${osx_image_mountpoint} failed" >&2
                 continue
             fi
+            
+            exit 1
+            
+            # Remove free space
+            #if ! hdiutil compact "${osx_image}"; then
+            #    printf "%s\n" "Removing free space from image: ${osx_image} failed" >&2
+            #    continue
+            #fi
             
             osx_image_mountpoint=$( mktemp -d /private/tmp/dmg.XXXXX ) || error "Unable to create image mountpoint"
             
@@ -243,7 +251,7 @@ for osx_image in "${input_directory}"/*\.dmg; do
             mountpoints+=( "${osx_image_volume_device_node}" )
             
             # Resize the image system volume to fit recovery partition
-            # FIXME - This assumes the disk has free space, should check
+            # FIXME - This assumes the disk has free space for the recovery partition, should check
             if ! diskutil quiet resizeVolume "${osx_image_volume_device_node}" "${osx_image_size_used}S" JHFS+ EmptyRecoveryHD 1m; then
                 printf "%s\n" "Resizing volume at device node: ${osx_image_volume_device_node} failed" >&2
                 continue
