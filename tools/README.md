@@ -4,7 +4,7 @@ These are scripts with a utility like feature to be used as tools.
 * [jekyllServe](https://github.com/erikberglund/Scripts/blob/master/tools/jekyllServe)  
  Small convenience script to start serving a jekyll site (and open it in a browser).
 
-* [letsEncryptJSS](https://github.com/erikberglund/Scripts/blob/master/tools/letsEncryptJSS)
+* [letsEncryptJSS](https://github.com/erikberglund/Scripts/blob/master/tools/letsEncryptJSS)  
  Enable and update Let's Encrypt certificate for a JSS running on Ubuntu.
 
 * [modelUTIInfo](https://github.com/erikberglund/Scripts/blob/master/tools/modelUTIInfo)  
