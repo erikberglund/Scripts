@@ -78,6 +78,12 @@ verifyVariables() {
     fi
 }
 
+verifyTomcatSettings () {
+
+    printf "%s\n" "${tomcatConfigPath}"
+
+}
+
 # Install Let's Encrypt
 installLetsEncrypt () {
         
@@ -226,6 +232,9 @@ fi
 
 # Make sure all required variables are present and valid
 verifyVariables
+
+# Make sure we only configure Tomcat if we can be sure to be successful
+verifyTomcatSettings
 
 # Install Let's Encrypt if not already installed
 if ! [[ -f "${letsEncrypt}" ]]; then

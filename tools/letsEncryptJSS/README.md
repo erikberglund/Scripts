@@ -26,3 +26,9 @@ sslDomain="jss.example.com"
 # Password for Tomcat keystore
 tomcatKeystorePassword="passw0rd"
 ```
+
+### Execution
+
+The script will create a backup of the jss server xml before modifying it.
+
+If nothing was modified, the backup is removed to only keep actual configuration changes as backup.
