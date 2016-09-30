@@ -10,6 +10,9 @@ These are scripts with a utility like feature to be used as tools.
 * [modelUTIInfo](https://github.com/erikberglund/Scripts/blob/master/tools/modelUTIInfo)  
  Get marketing name and icon path for Apple product by modelID or modelCode.
 
+* [osxImageModifier](https://github.com/erikberglund/Scripts/blob/master/tools/osxImageModifier)
+ Update contents in or reconfigure an OS X Disk Image.
+
 * [osxInstallerArchiver](https://github.com/erikberglund/Scripts/blob/master/tools/osxInstallerArchiver)  
  Find and create disk images for OS X Installer applications.
 
