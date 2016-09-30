@@ -10,7 +10,7 @@
 ###
 #//////////////////////////////////////////////////////////////////////////////////////////////////
 
-# Reconnects to specified Wi-Fi network if netork changes and it's in range
+# Reconnects to specified Wi-Fi network SSID if netork state changes and the configured SSID is in range
 # Used in our stores to force computers to the store Wi-Fi, but if stolen allows connection to
 # any wifi if the store network isn't in range.
 
