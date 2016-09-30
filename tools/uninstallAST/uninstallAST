@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# LaunchDaemons created by Gateway Manager/AST installer
+gw_launch_daemons=( "com.apple.gw_controld.plist"\
+                    "com.apple.gw_datad.plist"\
+                    "com.apple.gw_logd.plist" )
+
+# Single files created by Gateway Manager/AST installer
+gw_files=(  "/Library/Keychains/AppleServiceToolkit.keychain"\
+            "/Library/Preferences/com.apple.gateway.plist"\
+            "com.apple.GatewayManager.plist"
+            "/usr/local/libexec/gw_controld"\
+            "/usr/local/libexec/gw_datad"\
+            "/usr/local/libexec/gw_logd" )
+
+# Folders created by Gateway Manager/AST installer
+gw_folders=(    "/var/adg"\
+                "/var/log/adg"
+                "/Applications/Gateway Manager.app" )
+
+# NBIs created by Gateway Manager/AST installer
+nbis=( "AppleServiceToolkit.nbi" )
+
+
+# Quit Gateway Manager
+# Unload all services
+# Remove files and folders
+# Pkg forget and remove
+
+exit 0
