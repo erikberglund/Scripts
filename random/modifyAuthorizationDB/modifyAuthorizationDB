@@ -40,7 +40,7 @@ counter=0
 # Loop through all items in the 'mechanisms' array
 while read mechanism; do
     
-    # If mechanism contains 'TeamViewerAuthPlugin', remove it form temporary file
+    # If mechanism contains 'TeamViewerAuthPlugin', remove it from temporary file
     if [[ ${mechanism} =~ "TeamViewerAuthPlugin" ]]; then
         /usr/libexec/PlistBuddy -c "Delete mechanisms:${counter}" "${authdb_rule_plist}"
     else
