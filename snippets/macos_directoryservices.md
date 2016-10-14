@@ -1,10 +1,10 @@
-# macOS Snippets: dscl 
+# macOS Snippets: Directory Services 
 
 The following snippets are used to interact with the dscl command on macOS.
 
 ## Index
 
-* [UID Highest](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_dscl.md#uid-highest)
+* [UID Highest](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_directoryservices.md#uid-highest)
 
 ## Snippets
 
