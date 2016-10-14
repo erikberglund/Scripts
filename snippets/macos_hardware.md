@@ -1,6 +1,6 @@
-# OS X Snippets: Hardware 
+# macOS Snippets: Hardware 
 
-The following snippets are used to extract hardware information from a running OS X system.
+The following snippets are used to extract hardware information from a running macOS system.
 
 ## Index
 

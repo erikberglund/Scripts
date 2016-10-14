@@ -1,4 +1,4 @@
-# OS X Snippets: Disk Images 
+# macOS Snippets: Disk Images 
 
 The following snippets are used to interact with disk images.
 
@@ -181,7 +181,7 @@ printf "%s\n" "Partition named: ${partition_name} has current block size: ${disk
 printf "%s\n" "Partition named: ${partition_name} has current byte size: $((${disk_image_partition_size}*512))"
 ```
 
-Output using an OS X System disk image created using AutoDMG:
+Output using a macOS System disk image created using AutoDMG:
 
 ```console
 Partition named: Recovery HD has current block size: 1269536
@@ -207,7 +207,7 @@ Output using the El Capitan installer InstallESD.dmg disk image:
 Disk Image: InstallESD.dmg does NOT have a recovery partition
 ```
 
-Output using an OS X System disk image created using AutoDMG:
+Output using a macOS System disk image created using AutoDMG:
 
 ```console
 Disk Image: osx_10.11.5_15F34.hfs.dmg have a recovery partition

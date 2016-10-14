@@ -1,6 +1,6 @@
-# OS X Snippets: OS 
+# macOS Snippets: OS 
 
-The following snippets are used to extract os information from an OS X system.
+The following snippets are used to extract os information from a macOS system.
 
 ## Index
 
