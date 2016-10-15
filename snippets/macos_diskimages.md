@@ -26,15 +26,32 @@ Returns the disk image path for mountpoint.
 
 **BASH**
 ```bash
-# Return the path (mountpoint) where the disk image is mounted
-disk_image=$( hdiutil info -plist | xpath "/plist/dict/key[.='images']/following-sibling::array/dict/key[.='system-entities']/following-sibling::array/dict/key[.='mount-point']/following-sibling::string[contains(., \"${disk_image_mountpoint}\")]/../key[.='image-path']/following-sibling::string[1]/text()" 2>/dev/null )
+#!/bin/bash
 
-# Check that a path was returned, and that it is a folder
+# Define the mountpoint to check
+disk_image_mountpoint="/Volumes/OS X Install ESD"
+
+# Return the path to the disk image mounted at mountpoint
+disk_image=$( hdiutil info -plist | xpath "/plist/dict/key[.='images']/following-sibling::array/dict/key[.='system-entities']/following-sibling::array/dict/key[.='mount-point']/following-sibling::string[text()=\"${disk_image_mountpoint}\"]/../../../key[.='image-path']/following-sibling::string[1]/text()" 2>/dev/null )
+
+# Check that a path was returned
 if [[ -n ${disk_image} ]]; then
     printf "%s\n" "Disk Image: ${disk_image##*/} is mounted at: ${disk_image_mountpoint}"
 else
     printf "%s\n" "No Disk Image found for mountpoint: ${disk_image_mountpoint}"
 fi
+```
+
+Example using the El Capitan installer InstallESD.dmg disk image:
+
+Output if mounted:
+```console
+Disk Image: InstallESD.dmg is mounted at: /Volumes/OS X Install ESD
+```
+
+Output if NOT mounted:
+```console
+No Disk Image found for mountpoint: /Volumes/OS X Install ESD
 ```
 
 ### Format
