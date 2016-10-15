@@ -4,9 +4,9 @@ The following snippets are used to extract os information from a macOS system.
 
 ## Index
 
-* [OS Version](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_os.md#os-version)
-* [OS Build Version](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_os.md#os-build-version)
-* [OS Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_os.md#os-marketing-name)
+* [OS Version](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_os.md#os-version)
+* [OS Build Version](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_os.md#os-build-version)
+* [OS Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_os.md#os-marketing-name)
 
 ## Snippets
 
@@ -94,3 +94,4 @@ Output:
 ```console
 OS X El Capitan
 ```
+macos

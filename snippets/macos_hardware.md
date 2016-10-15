@@ -4,17 +4,17 @@ The following snippets are used to extract hardware information from a running m
 
 ## Index
 
-* [Serial Number (Computer)](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#serial-number-computer)
-* [Serial Number (Logic Board)](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#serial-number-logic-board)
-* [MAC Address](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#mac-address)
-* [MAC Address (Logic Board)](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#mac-address-logic-board)
-* [Battery Percentage](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#battery-percentage)
-* [Display Inches](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#display-inches)
-* [Board ID](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#board-id)
-* [Model Identifier / Machine Model](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#model-identifier--machine-model)
-* [RAM Installed](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#ram-installed)
-* [Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#marketing-name)
-* [Virtual Machine](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_hardware.md#virtual-machine)
+* [Serial Number (Computer)](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#serial-number-computer)
+* [Serial Number (Logic Board)](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#serial-number-logic-board)
+* [MAC Address](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#mac-address)
+* [MAC Address (Logic Board)](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#mac-address-logic-board)
+* [Battery Percentage](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#battery-percentage)
+* [Display Inches](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#display-inches)
+* [Board ID](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#board-id)
+* [Model Identifier / Machine Model](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#model-identifier--machine-model)
+* [RAM Installed](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#ram-installed)
+* [Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#marketing-name)
+* [Virtual Machine](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#virtual-machine)
 
 ## Snippets
 

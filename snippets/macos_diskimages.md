@@ -10,14 +10,32 @@ disk_image="/Applications/Install OS X El Capitan.app/Contents/SharedSupport/Ins
 
 ## Index
 
-* [Format](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#format)
-* [Mountpoint](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#mountpoint)
-* [Partition Scheme](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#partition-scheme)
-* [Partition Size](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#partition-size)
-* [Recovery Partition](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#recovery-partition)
-* [Scanned](https://github.com/erikberglund/Scripts/blob/master/snippets/osx_diskimages.md#scanned)
+* [Disk Image for Mountpoint](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_diskimages.md#disk-image-for-mountpoint)
+* [Format](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_diskimages.md#format)
+* [Mountpoint for Disk Image](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_diskimages.md#mountpoint-for-disk-image)
+* [Partition Scheme](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_diskimages.md#partition-scheme)
+* [Partition Size](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_diskimages.md#partition-size)
+* [Recovery Partition](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_diskimages.md#recovery-partition)
+* [Scanned](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_diskimages.md#scanned)
 
 ## Snippets
+
+### Disk Image for Mountpoint
+
+Returns the disk image path for mountpoint.
+
+**BASH**
+```bash
+# Return the path (mountpoint) where the disk image is mounted
+disk_image=$( hdiutil info -plist | xpath "/plist/dict/key[.='images']/following-sibling::array/dict/key[.='system-entities']/following-sibling::array/dict/key[.='mount-point']/following-sibling::string[contains(., \"${disk_image_mountpoint}\")]/../key[.='image-path']/following-sibling::string[1]/text()" 2>/dev/null )
+
+# Check that a path was returned, and that it is a folder
+if [[ -n ${disk_image} ]]; then
+    printf "%s\n" "Disk Image: ${disk_image##*/} is mounted at: ${disk_image_mountpoint}"
+else
+    printf "%s\n" "No Disk Image found for mountpoint: ${disk_image_mountpoint}"
+fi
+```
 
 ### Format
 
@@ -65,7 +83,7 @@ Format is any one of the following abbreviations:
 | Rken   | NDIF compressed (obsolete format) |
 | DC42   | Disk Copy 4.2 image (obsolete format) |
 
-### Mountpoint
+### Mountpoint for Disk Image
 
 Returns the mountpoint for disk image at path.
 
@@ -231,3 +249,4 @@ else
     printf "%s\n" "Disk Image: ${disk_image##*/} is NOT scanned for restore"
 fi
 ```
+macos

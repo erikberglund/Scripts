@@ -26,3 +26,11 @@ Output:
 ```console
 NetBooted
 ```
+
+### BSDP Variables
+
+```bash
+ipconfig netbootoption shadow_mount_path
+ipconfig netbootoption shadow_file_path
+ipconfig netbootoption machine_name
+```
