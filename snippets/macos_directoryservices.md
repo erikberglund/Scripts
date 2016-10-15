@@ -1,6 +1,6 @@
 # macOS Snippets: Directory Services 
 
-The following snippets are used to interact with the dscl command on macOS.
+The following snippets are used to interact with the directory services on macOS.
 
 ## Index
 
