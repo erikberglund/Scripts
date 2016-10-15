@@ -36,22 +36,22 @@ disk_image=$( hdiutil info -plist | xpath "/plist/dict/key[.='images']/following
 
 # Check that a path was returned
 if [[ -n ${disk_image} ]]; then
-    printf "%s\n" "Disk Image: ${disk_image##*/} is mounted at: ${disk_image_mountpoint}"
+    printf "%s\n" "Mountpoint: ${disk_image_mountpoint} is mounted from disk image: ${disk_image}"
 else
-    printf "%s\n" "No Disk Image found for mountpoint: ${disk_image_mountpoint}"
+    printf "%s\n" "Mountpoint: ${disk_image_mountpoint} is NOT mounted from a disk image"
 fi
 ```
 
 Example using the El Capitan installer InstallESD.dmg disk image:
 
-Output if mounted:
+Output if mounted from a disk image:
 ```console
-Disk Image: InstallESD.dmg is mounted at: /Volumes/OS X Install ESD
+Mountpoint: /Volumes/OS X Install ESD is mounted from disk image: /Applications/Install OS X El Capitan.app/Contents/SharedSupport/InstallESD.dmg
 ```
 
-Output if NOT mounted:
+Output if NOT mounted from a disk image:
 ```console
-No Disk Image found for mountpoint: /Volumes/OS X Install ESD
+Mountpoint: /Volumes/OS X Install ESD is NOT mounted from a disk image
 ```
 
 ### Format
