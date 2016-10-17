@@ -185,6 +185,12 @@ targetVolumeDatabasePath="/Local/Default/Users/${userShortName}"
 # Database path on target volume.
 targetVolumeNodePath="${targetVolumePath}/var/db/dslocal/nodes/Default"
 
+# Check that 'userShortName' doesn't already exist in the target volume database.
+if "${cmd_dscl}" -f "${targetVolumeNodePath}" localonly -read "/Local/Default/Users/${userShortName}" 2>&1; then
+    printf "%s\n" "A user with shortname: ${userShortName} already exists!"
+    exit 1
+fi
+
 # If 'userUID' is empty, find first available uid in target volume database
 if [[ -z ${userUID} ]] || [[ ${userIsHidden} == yes ]]; then
     if [[ ${userIsHidden} == yes ]] && (( targetVolumeOsMinorVersion <= 9 )); then
