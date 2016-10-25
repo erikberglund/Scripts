@@ -82,7 +82,7 @@ MAC address for the main logic board (MLB)
 
 **BASH**
 ```bash
-nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print $NF }'
+nvram 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print $NF }'
 ```
 
 Output:
@@ -95,7 +95,7 @@ Uppercase output:
 
 **BASH**
 ```bash
-nvram -x 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print toupper($NF) }'
+nvram 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:ROM | awk '{ gsub(/\%/, ""); print toupper($NF) }'
 ```
 
 Output:
@@ -160,6 +160,12 @@ Internal Display Inches: 15.4
 ID for the motherboard
 
 **BASH**
+```bash
+nvram 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:HW_BID | awk '{ print $NF }'
+```
+
+Alternate Method
+
 ```bash
 ioreg -d2 -c IOPlatformExpertDevice | awk -F\" '/board-id/{ print $(NF-1) }'
 ```
