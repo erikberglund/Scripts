@@ -24,6 +24,12 @@ Serial number for the computer
 
 **BASH**
 ```bash
+nvram 4D1EDE05-38C7-4A6A-9CC6-4BCCA8B38C14:SSN | awk '{ gsub(/\%.*/, ""); print $NF }'
+```
+
+Alternate Method:
+
+```bash
 ioreg -d2 -c IOPlatformExpertDevice | awk -F\" '/IOPlatformSerialNumber/ { print $(NF-1) }'
 ```
 
