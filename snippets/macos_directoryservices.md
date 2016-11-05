@@ -2,13 +2,11 @@
 
 The following snippets are used to interact with the directory services on macOS.
 
-## Index
+### Index
 
 * [UID Highest](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_directoryservices.md#uid-highest)
 
-## Snippets
-
-### UID Highest
+## UID Highest
 
 Returns the highest UID in the user database.
 
