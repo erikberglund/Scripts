@@ -2,7 +2,7 @@
 
 The following snippets are used to extract hardware information from a running macOS system.
 
-## Index
+### Index
 
 * [Serial Number (Computer)](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#serial-number-computer)
 * [Serial Number (Logic Board)](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#serial-number-logic-board)
@@ -16,9 +16,7 @@ The following snippets are used to extract hardware information from a running m
 * [Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#marketing-name)
 * [Virtual Machine](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#virtual-machine)
 
-## Snippets
-
-### Serial Number (Computer)
+## Serial Number (Computer)
 
 Serial number for the computer
 
@@ -39,7 +37,7 @@ Output:
 C02*****G8WP
 ```
 
-### Serial Number (Logic Board)
+## Serial Number (Logic Board)
 
 Serial number for the main logic board (MLB)
 
@@ -54,7 +52,7 @@ Output:
 C0252******GF2C1H
 ```
 
-### MAC Address
+## MAC Address
 
 MAC address for interface ( using `en0` in the example )
 
@@ -82,7 +80,7 @@ Output:
 A45E60******
 ```
 
-### MAC Address (Logic Board)
+## MAC Address (Logic Board)
 
 MAC address for the main logic board (MLB)
 
@@ -110,7 +108,7 @@ Output:
 0CBC9F******
 ```
 
-### Battery Percentage
+## Battery Percentage
 
 Current battery charge percentage:
 
@@ -125,7 +123,7 @@ Output:
 52,96%
 ```
 
-### Display Inches
+## Display Inches
 
 Physical size (in inches) for the internal display
 
@@ -161,7 +159,7 @@ Output:
 Internal Display Inches: 15.4
 ```
 
-### Board ID
+## Board ID
 
 ID for the motherboard
 
@@ -182,7 +180,7 @@ Output:
 Mac-06F11F11946D27C5
 ```
 
-### Model Identifier / Machine Model
+## Model Identifier / Machine Model
 
 Model Identifier / Machine Model for the computer
 
@@ -197,7 +195,7 @@ Output:
 MacBookPro11,5
 ```
 
-### Laptop/Desktop
+## Laptop/Desktop
 
 Check if computer is laptop or desktop
 
@@ -216,7 +214,7 @@ Output:
 Laptop
 ```
 
-### RAM Installed
+## RAM Installed
 
 RAM installed (in GB without unit)
 
@@ -252,7 +250,7 @@ Output:
 16384
 ```
 
-### Marketing Name
+## Marketing Name
 
 **NOTE! Requires an internet connection**
 
@@ -269,7 +267,7 @@ Output:
 MacBook Pro (Retina, 15-inch, Mid 2015)
 ```
 
-### Virtual Machine
+## Virtual Machine
 
 Check if system is running in a virtual machine
 
