@@ -2,6 +2,8 @@
 
 This script sets up and manages Let's Encrypt for a JSS running on Ubuntu 14.04.
 
+**NOTE! This script only handles a single JSS configuration in the tomcat settings.**
+
 ### Configuration
 
 Configure the following variables before using the script:
