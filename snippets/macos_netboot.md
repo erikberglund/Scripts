@@ -2,9 +2,9 @@
 
 The following snippets are used in a NetBoot environment.
 
-Here is a blogpost I wrote relatex to NetBoot environment variables: [Get BSDP Server IP from a NetBoot client](http://erikberglund.github.io/2016/Get-BSDP-Server-IP-from-a-NetBoot-client/)
+Here is a blogpost I wrote related to NetBoot environment variables: [Get BSDP Server IP from a NetBoot client](http://erikberglund.github.io/2016/Get-BSDP-Server-IP-from-a-NetBoot-client/)
 
-## Index
+### Index
 
 * [BSDP Server IP](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_netboot.md#bsdp-server-ip)
 * [DHCP Server IP](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_netboot.md#dhcp-server-ip)
@@ -27,9 +27,9 @@ ipconfig netbootoption 66
 ipconfig netbootoption 67
 ```
 
-## Snippets
+# Snippets
 
-### BSDP Server IP
+## BSDP Server IP
 
 Get the IP for the server currently netbooted from.
 
@@ -62,7 +62,7 @@ Output:
 10.2.0.10
 ```
 
-### DHCP Server IP
+## DHCP Server IP
 
 Get the IP for the DHCP server.
 
@@ -77,7 +77,7 @@ Output:
 10.2.0.1
 ```
 
-### Is NetBooted
+## Is NetBooted
 
 Check if the computer is currently netbooted
 
@@ -96,7 +96,7 @@ Output:
 NetBooted
 ```
 
-### NBI Name
+## NBI Name
 
 Get the name of the NBI currently booted from.
 
