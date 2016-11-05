@@ -27,8 +27,6 @@ ipconfig netbootoption 66
 ipconfig netbootoption 67
 ```
 
-# Snippets
-
 ## BSDP Server IP
 
 Get the IP for the server currently netbooted from.
