@@ -8,7 +8,7 @@ _Unless otherwise stated, all examples will be using the El Captian InstallESD.d
 disk_image="/Applications/Install OS X El Capitan.app/Contents/SharedSupport/InstallESD.dmg"
 ```
 
-## Index
+### Index
 
 * [Disk Image for Mountpoint](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_diskimages.md#disk-image-for-mountpoint)
 * [Format](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_diskimages.md#format)
@@ -18,9 +18,7 @@ disk_image="/Applications/Install OS X El Capitan.app/Contents/SharedSupport/Ins
 * [Recovery Partition](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_diskimages.md#recovery-partition)
 * [Scanned](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_diskimages.md#scanned)
 
-## Snippets
-
-### Disk Image for Mountpoint
+## Disk Image for Mountpoint
 
 Returns the disk image path for mountpoint.
 
@@ -54,7 +52,7 @@ Output if NOT mounted from a disk image:
 Mountpoint: /Volumes/OS X Install ESD is NOT mounted from a disk image
 ```
 
-### Format
+## Format
 
 Returns the current format for disk image at path.
 
@@ -100,7 +98,7 @@ Format is any one of the following abbreviations:
 | Rken   | NDIF compressed (obsolete format) |
 | DC42   | Disk Copy 4.2 image (obsolete format) |
 
-### Mountpoint for Disk Image
+## Mountpoint for Disk Image
 
 Returns the mountpoint for disk image at path.
 
@@ -175,7 +173,7 @@ Output if NOT mounted:
 Disk Image: InstallESD.dmg is NOT mounted
 ```
 
-### Partition Scheme
+## Partition Scheme
 
 Returns the partition scheme for disk image at path.
 
@@ -198,7 +196,7 @@ Output:
 Disk Image: InstallESD.dmg has partition scheme: GUID
 ```
 
-### Partition Size
+## Partition Size
 
 Check the block size of a partition.
 
@@ -223,7 +221,7 @@ Partition named: Recovery HD has current block size: 1269536
 Partition named: Recovery HD has current byte size: 650002432
 ```
 
-### Recovery Partition
+## Recovery Partition
 
 Check if disk image have a recovery partition.
 
@@ -247,7 +245,7 @@ Output using a macOS System disk image created using AutoDMG:
 ```console
 Disk Image: osx_10.11.5_15F34.hfs.dmg have a recovery partition
 ```
-### Scanned
+## Scanned
 
 Check if disk image have been scanned for restore.
 
@@ -266,4 +264,3 @@ else
     printf "%s\n" "Disk Image: ${disk_image##*/} is NOT scanned for restore"
 fi
 ```
-macos
