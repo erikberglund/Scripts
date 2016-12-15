@@ -31,7 +31,7 @@ Scripts that doesn't fit any other category.
 * [printSIPStatus](https://github.com/erikberglund/Scripts/blob/master/random/printSIPStatus)  
  Print the current SIP status of the running system.
  
-* [reconnectToWiFiNetwork](https://github.com/erikberglund/Scripts/blob/master/random/reconnectToWiFiNetwork)  
+* [reconnectWiFiNetwork](https://github.com/erikberglund/Scripts/blob/master/random/reconnectWiFiNetwork)  
  Reconnect to configured SSID (if in range) if: Disonnected, Another SSID selected, Wi-Fi card powered off.
 
 * [saveUserPictureToFile](https://github.com/erikberglund/Scripts/blob/master/random/saveUserPictureToFile)  

@@ -83,7 +83,7 @@ if [[ -z ${wifi_network_ssid} ]]; then
 fi
 
 # Get first Wi-Fi interface (enX)
-wifi_interface=$( networksetup -listallhardwareports | awk '/.*Wi-Fi.*/ { getline; print $NF; exit; }' )
+wifi_interface=$( networksetup -listallhardwareports | awk '/Wi-Fi/ { getline; print $NF; exit; }' )
 if [[ -z ${wifi_interface} ]]; then
 	printf "%s\n" "Could not get Wi-Fi hardware interface"; exit 1
 fi

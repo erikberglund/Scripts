@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        
+        <!-- ADD NOTIFICATION FOR NETWORK CHANGES -->
+        <key>LaunchEvents</key>
+        <dict>
+            <key>com.apple.notifyd.matching</key>
+            <dict>
+                <key>com.apple.network_change</key>
+                <dict>
+                    <key>Notification</key>
+                    <string>com.apple.system.config.network_change</string>
+                </dict>
+            </dict>
+        </dict>
+        
+        <!-- UNIQUE LABEL -->
+        <key>Label</key>
+        <string>com.github.erikberglund.reconnectWiFiNetwork</string>
+        
+        <!-- EXECUTABLE -->
+        <key>Program</key>
+        <string>/Users/erikberglund/GitHub/Scripts/random/reconnectWiFiNetwork/reconnectWiFiNetwork</string>
+        
+        <!-- STD OUT LOGGING (OPTIONAL) -->
+        <key>StandardOutPath</key>
+        <string>/tmp/com.github.erikberglund.reconnectWiFiNetwork-stdout</string>
+        
+        <!-- STD ERR LOGGING (OPTIONAL) -->
+        <key>StandardErrorPath</key>
+        <string>/tmp/com.github.erikberglund.reconnectWiFiNetwork-stderr</string>
+    </dict>
+</plist>
