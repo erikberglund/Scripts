@@ -319,7 +319,7 @@ print_usage() {
 	printf "  %s\t\t%s\n" "-X" "(Optional) Format output as regex strings surrounded by xml string tags (<string>regex</string>)"
 	printf "  %s\t\t%s\n" "-a" "(Optional) Output all dependencies for target(s)"
 	printf "  %s\t\t%s\n" "-r" "(Optional) Output what file(s) depends on each output entry"
-	printf "  %s\t\t%s\n" "-f" "(Optional) Output full paths for all files (Used to turn off the default behaviour of only outputting path to the .framework bondle for files contained within)"
+	printf "  %s\t\t%s\n" "-f" "(Optional) Output full paths for all files (Used to turn off the default behaviour of only outputting path to the .framework bundle for files contained within)"
 	printf "  %s\t%s\n" "-e [regex]" "(Optional) Output full paths for all files matched by [regex] (Used to turn off the default behaviour for matching files of only outputting path to the .framework bundle for files contained within)"
 	printf "  %s\t%s\n" "-i [regex]" "(Optional) Igore item(s) matching [regex] in output"
 	printf "\n"
