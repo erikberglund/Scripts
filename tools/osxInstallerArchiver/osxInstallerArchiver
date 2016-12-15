@@ -81,7 +81,7 @@ parse_opts() {
     # Check if option '-a' was passed, then use mdfind to find all installers matching bundle id wildcard search: 'com.apple.InstallAssistant.*'
     if [[ ${search_applications} == True ]]; then
         old_ifs="${IFS}"; IFS=$'\n'
-        osx_installers=( $( mdfind "kMDItemCFBundleIdentifier == 'com.apple.InstallAssistant.*'c" ) )
+        osx_installers=( $( mdfind "kMDItemCFBundleIdentifier == 'com.apple.InstallAssistant.*'c && kMDItemContentType=com.apple.application-bundle" ) )
         IFS="${old_ifs}"
     fi
     
