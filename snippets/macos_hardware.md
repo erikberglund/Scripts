@@ -14,7 +14,7 @@ The following snippets are used to extract hardware information from a running m
 * [Model Identifier / Machine Model](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#model-identifier--machine-model)
 * [RAM Installed](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#ram-installed)
 * [Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#marketing-name)
-* [EFI Firmware Version](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#efi-firmware-version)
+* [Boot ROM Version](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#boot-rom-version)
 * [Virtual Machine](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#virtual-machine)
 
 ## Serial Number (Computer)
@@ -268,9 +268,9 @@ Output:
 MacBook Pro (Retina, 15-inch, Mid 2015)
 ```
 
-## EFI Firmware Version
+## Boot ROM Version
 
-Return the current EFI firmware version
+Return the current boot ROM (EFI) version
 
 **BASH**
 ```bash
