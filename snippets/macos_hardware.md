@@ -14,6 +14,7 @@ The following snippets are used to extract hardware information from a running m
 * [Model Identifier / Machine Model](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#model-identifier--machine-model)
 * [RAM Installed](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#ram-installed)
 * [Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#marketing-name)
+* [EFI Firmware Version](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#efi-firmware-version)
 * [Virtual Machine](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#virtual-machine)
 
 ## Serial Number (Computer)
@@ -265,6 +266,21 @@ Output:
 
 ```console
 MacBook Pro (Retina, 15-inch, Mid 2015)
+```
+
+## EFI Firmware Version
+
+Return the current EFI firmware version
+
+**BASH**
+```bash
+ioreg -p IODeviceTree -n rom@0 -r | awk -F\" '/version/{ print $(NF-1) }'
+```
+
+Output:
+
+```console
+MBP114.88Z.0172.B10.1610201519
 ```
 
 ## Virtual Machine
