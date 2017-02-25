@@ -15,6 +15,7 @@ The following snippets are used to extract hardware information from a running m
 * [RAM Installed](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#ram-installed)
 * [Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#marketing-name)
 * [Boot ROM Version](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#boot-rom-version)
+* [Uptime](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#uptime)
 * [Virtual Machine](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#virtual-machine)
 
 ## Serial Number (Computer)
@@ -281,6 +282,25 @@ Output:
 
 ```console
 MBP114.88Z.0172.B10.1610201519
+```
+
+## Uptime
+
+Get system uptime in seconds
+
+**BASH**
+```bash
+# Get boot time form kernel and calculate difference from current time
+uptime=$(( $( date +%s ) - $( sysctl -n kern.boottime | awk -F'[^0-9]*' '{ print $2 }' ) ))
+
+# Print value to stdout
+printf "%s\n" "${uptime}"
+```
+
+Output:
+
+```console
+1107
 ```
 
 ## Virtual Machine
