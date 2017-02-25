@@ -14,9 +14,6 @@ Scripts and snippets I've written.
 * [snippets](https://github.com/erikberglund/Scripts/tree/master/snippets)  
  Snippets I use in my scripts.
 
-* [styleguides](https://github.com/erikberglund/Scripts/tree/master/styleguides)  
- Styleguides i try to adhere to when writing scripts.
-
 * [tools](https://github.com/erikberglund/Scripts/tree/master/tools)  
  Scripts with a utility like feature to be used as tools.
 
