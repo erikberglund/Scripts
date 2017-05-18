@@ -104,6 +104,9 @@ Returns the mountpoint for disk image at path.
 
 **BASH**
 ```bash
+# Set the path to the disk image
+disk_image="/Applications/Install OS X El Capitan.app/Contents/SharedSupport/InstallESD.dmg"
+
 # Return the path (mountpoint) where the disk image is mounted
 disk_image_mountpoint=$( hdiutil info -plist | xpath "/plist/dict/key[.='images']/following-sibling::array/dict/key[.='image-path']/following-sibling::string[1][contains(., \"${disk_image}\")]/../key[.='system-entities']/following-sibling::array/dict/key[.='mount-point']/following-sibling::string/text()" 2>/dev/null )
 
