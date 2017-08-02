@@ -1,0 +1,35 @@
+# macOS Snippets: Certificates 
+
+The following snippets are used to extract os information from a macOS system.
+
+### Index
+
+* [Get Certificate from SHA-1 hash](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_os.md#os-version)
+
+## Get Certificate from SHA-1 hash
+
+On a running system you can use the `sw_vers` command to query the os version.
+
+**BASH**
+```bash
+hash="F6BE3A02D876EC1F96C6CA983934FF14EEA99409"
+security find-certificate -a -Z | awk '/'"${hash}"'/{flag=1;next}/SHA-1 hash:/{flag=0}flag'
+```
+
+Output:
+
+```console
+keychain: "/Users/erikberglund/Library/Keychains/login.keychain-db"
+version: 512
+class: 0x80001000 
+attributes:
+    "alis"<blob>="Apple Application Integration Certification Authority"
+    "cenc"<uint32>=0x00000003 
+    "ctyp"<uint32>=0x00000001 
+    "hpky"<blob>=0x31EA76A92374A5DFD4FDEEA0C1A69EC6110E11EC  "1\352v\251#t\245\337\324\375\356\240\301\246\236\306\021\016\021\354"
+    "issu"<blob>=0x3062310B300906035504061302555331133011060355040A130A4150504C4520494E432E31263024060355040B131D4150504C452043455254494649434154494F4E20415554484F52495459311630140603550403130D4150504C4520524F4F54204341  "0b1\0130\011\006\003U\004\006\023\002US1\0230\021\006\003U\004\012\023\012APPLE INC.1&0$\006\003U\004\013\023\035APPLE CERTIFICATION AUTHORITY1\0260\024\006\003U\004\003\023\015APPLE ROOT CA"
+    "labl"<blob>="Apple Application Integration Certification Authority"
+    "skid"<blob>=0x31EA76A92374A5DFD4FDEEA0C1A69EC6110E11EC  "1\352v\251#t\245\337\324\375\356\240\301\246\236\306\021\016\021\354"
+    "snbr"<blob>=0x5618E82ADBE2DBF3  "V\030\350*\333\342\333\363"
+    "subj"<blob>=0x30818A310B300906035504061302555331133011060355040A0C0A4170706C6520496E632E31263024060355040B0C1D4170706C652043657274696669636174696F6E20417574686F72697479313E303C06035504030C354170706C65204170706C69636174696F6E20496E746567726174696F6E2043657274696669636174696F6E20417574686F72697479  "0\201\2121\0130\011\006\003U\004\006\023\002US1\0230\021\006\003U\004\012\014\012Apple Inc.1&0$\006\003U\004\013\014\035Apple Certification Authority1>0<\006\003U\004\003\0145Apple Application Integration Certification Authority"
+```
