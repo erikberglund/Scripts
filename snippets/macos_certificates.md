@@ -1,6 +1,6 @@
 # macOS Snippets: Certificates 
 
-The following snippets are used to extract os information from a macOS system.
+The following snippets are used to interact with certificates.
 
 ### Index
 
