@@ -8,7 +8,7 @@ The following snippets are used to extract os information from a macOS system.
 
 ## Get Certificate from SHA-1 hash
 
-On a running system you can use the `sw_vers` command to query the os version.
+Find the certificate that matches the supplied SHA-1 hash.
 
 **BASH**
 ```bash
