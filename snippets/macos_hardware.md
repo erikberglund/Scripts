@@ -15,7 +15,7 @@ The following snippets are used to extract hardware information from a running m
 * [RAM Installed](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#ram-installed)
 * [Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#marketing-name)
 * [Boot ROM Version](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#boot-rom-version)
-* [Boot Time](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#boot-time)
+* [Boot Time/Last Reboot](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#boot-time-last-reboot)
 * [Uptime](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#uptime)
 * [Virtual Machine](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#virtual-machine)
 
@@ -285,9 +285,9 @@ Output:
 MBP114.88Z.0172.B10.1610201519
 ```
 
-## Boot Time
+## Boot Time/Last Reboot
 
-Get boot date and time in unix timestamp or as a date string
+Get boot time (last reboot) in unix timestamp or as a date string
 
 **BASH**
 ```bash
