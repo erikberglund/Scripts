@@ -15,6 +15,7 @@ The following snippets are used to extract hardware information from a running m
 * [RAM Installed](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#ram-installed)
 * [Marketing Name](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#marketing-name)
 * [Boot ROM Version](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#boot-rom-version)
+* [Boot Time](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#boot-time)
 * [Uptime](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#uptime)
 * [Virtual Machine](https://github.com/erikberglund/Scripts/blob/master/snippets/macos_hardware.md#virtual-machine)
 
@@ -284,13 +285,38 @@ Output:
 MBP114.88Z.0172.B10.1610201519
 ```
 
+## Boot Time
+
+Get boot date and time in unix timestamp or as a date string
+
+**BASH**
+```bash
+# Get boot time from kernel in unix timestamp  
+boot_time_unix=$( sysctl -n kern.boottime | awk -F'[^0-9]*' '{ print $2 }' )
+
+# Get boot time from kernel in unix timestamp and convert to date string  
+# Using this format as output: "+%F %T %z"  
+boot_time_date=$( sysctl -n kern.boottime | awk -F'[^0-9]*' '{ print $2 }' | xargs date -jf "%s" "+%F %T %z" ) 
+
+# Print value to stdout
+printf "%s\n" "boot_time_unix=${boot_time_unix}"  
+printf "%s\n" "boot_time_date=${boot_time_date}"
+```
+
+Output:
+
+```console
+boot_time_unix=1508047230
+boot_time_date=2017-10-15 08:00:30 +0200
+```
+
 ## Uptime
 
 Get system uptime in seconds
 
 **BASH**
 ```bash
-# Get boot time form kernel and calculate difference from current time
+# Get boot time from kernel and calculate difference from current time
 uptime=$(( $( date +%s ) - $( sysctl -n kern.boottime | awk -F'[^0-9]*' '{ print $2 }' ) ))
 
 # Print value to stdout
